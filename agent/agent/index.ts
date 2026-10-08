@@ -9,7 +9,7 @@
  *   GRPC_SERVER_ADDR - injected by Astro messaging service
  */
 
-import { Agent } from '@mastra/core/agent';
+import { createQaAgent, loadConfig } from './qa-agent';
 import { Mastra } from '@mastra/core/mastra';
 import { Memory } from '@mastra/memory';
 import { LibSQLStore } from '@mastra/libsql';
@@ -55,11 +55,8 @@ const observability = new Observability({
   },
 });
 
-const agent = new Agent({
-  id: 'qa-agent',
-  name: 'Qa Agent',
-  instructions: 'You are Qa Agent, a helpful AI assistant. Describe what your agent does in one sentence.',
-  model: 'anthropic/claude-sonnet-4-5',
+// Same agent the benchmark harness runs; only env vars differ between arms.
+const { agent } = await createQaAgent(loadConfig(), {
   memory,
   // Ensure traces include stable Astro metadata by default.
   // The collector endpoint (OTEL_EXPORTER_OTLP_ENDPOINT) is injected in deployed

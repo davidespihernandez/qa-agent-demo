@@ -8,3 +8,4 @@ results/*
 !results/.gitkeep
 *.pem
 .DS_Store
+.playwright-mcp/
