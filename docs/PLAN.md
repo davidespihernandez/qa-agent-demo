@@ -26,3 +26,17 @@ Show how an agent is created and deployed (Astro), exposed through a gateway (Fa
 - [ ] Astro: spec, local run, deploy
 - [ ] Fabric: connections, route, gateway key, plugins
 - [ ] DEMO.md talk track with real numbers
+
+## Ideas to integrate into the demo (parked, current plan stays as is)
+
+- **More MCP servers + Tool Search.** Register extra MCP servers behind Fabric next to Playwright
+  (for example a docs MCP and an Orders API MCP, or the Orders OpenAPI exposed with the MCP HTTP
+  bridge plugin). The agent then sees a large tool catalog. With Tool Search on, it gets 3 meta-tools
+  (search, get, execute) instead of every schema, so tokens drop. With only Playwright (25 tools)
+  the saving is small, so this is what makes the Tool Search story realistic.
+  Measure it honestly: Tool Search adds steps and does not shrink page snapshots.
+- **Arm D: adaptive-model-router (Jev).** Picks model and reasoning effort per request, so easy tests
+  run on a cheaper model. Needs a Jev endpoint and key as a Fabric decision service. Report pass rate
+  next to cost, turn session stickiness on, and flag mid-run model switches.
+- **Guardrails act (optional):** LLM Rate Limit, Agent Scope Gate (block `browser_run_code_unsafe`),
+  Killswitch. Keep them off during benchmark runs so they cannot distort the numbers.
