@@ -26,6 +26,10 @@ const filter = args.tests ? String(args.tests).split(',') : null;
 const testsDir = join(import.meta.dir, '..', 'tests');
 const files = (await readdir(testsDir)).filter((f) => f.endsWith('.md')).sort().filter((f) => !filter || filter.some((p) => f.startsWith(p)));
 
+// Arm A is the direct baseline: never let gateway settings from .env leak into it.
+if (arm === 'A') {
+  for (const k of ['LLM_BASE_URL', 'FABRIC_GATEWAY_KEY', 'MCP_URL', 'MCP_TOKEN']) delete process.env[k];
+}
 const cfg = loadConfig();
 const results: any[] = [];
 

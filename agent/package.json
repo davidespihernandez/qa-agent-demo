@@ -11,6 +11,7 @@
   },
   "main": "./agent/index.ts",
   "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.79",
     "@astropods/adapter-mastra": "latest",
     "@mastra/core": "^1.64.0",
     "@mastra/libsql": "^1.22.3",
