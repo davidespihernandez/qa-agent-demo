@@ -75,7 +75,8 @@ export type FraudReport = {
 
 // ---------- API tools built from the OpenAPI specs (arm A) ----------
 
-const SPEC_NAMES = ['orders', 'users', 'payments'];
+// One merged spec (Orders + Users + Payments): the same file is imported into Fabric, so every arm sees the same 21 operations.
+const SPEC_NAMES = ['demo-apis'];
 const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete'];
 
 function apiTools(cfg: QaConfig) {
@@ -95,7 +96,7 @@ function apiTools(cfg: QaConfig) {
           shape[p.name] = p.required ? s : s.optional();
         }
         if (op.requestBody) shape.body = z.record(z.string(), z.any()).describe('JSON request body');
-        const id = `${api}_${op.operationId}`;
+        const id = op.operationId;
         tools[id] = createTool({
           id,
           description: [op.summary, op.description].filter(Boolean).join('. '),
