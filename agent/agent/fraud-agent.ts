@@ -5,7 +5,7 @@
  * Arms (see ../../README.md):
  *   A direct:    no LLM_BASE_URL / MCP_URL / FABRIC_GATEWAY_KEY. API tools are built in-process from
  *                the OpenAPI specs in ./specs (read-only: writes are refused locally).
- *   B/C gateway: LLM_BASE_URL + MCP_URL point at Fabric, FABRIC_GATEWAY_KEY is sent as Authorization: Bearer.
+ *   B/C gateway: LLM_BASE_URL + MCP_URL point at Fabric, FABRIC_GATEWAY_KEY is sent as Authorization: Bearer to the LLM route and as fg-api-key to the MCP route.
  *                The API tools come from Fabric's MCP HTTP bridge (Tool Search on/off is a Fabric plugin setting).
  *
  * `report_fraud` is always a local tool: it POSTs the finding to a webhook (FRAUD_WEBHOOK_URL).
@@ -16,6 +16,7 @@ import { createTool } from '@mastra/core/tools';
 import { MCPClient } from '@mastra/mcp';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { z } from 'zod';
+import { jsonSchema } from '@ai-sdk/provider-utils';
 import { createHash, randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -73,54 +74,49 @@ export type FraudReport = {
   severity: 'low' | 'medium' | 'high';
 };
 
-// ---------- API tools built from the OpenAPI specs (arm A) ----------
+// ---------- API tools for arm A (in-process, same definitions the Fabric MCP bridge exposes) ----------
 
-// One merged spec (Orders + Users + Payments): the same file is imported into Fabric, so every arm sees the same 21 operations.
-const SPEC_NAMES = ['demo-apis'];
+// bridge-tools.json is a snapshot of what Fabric's MCP HTTP bridge serves (see scripts/dump-bridge-tools.ts),
+// demo-apis.json is the OpenAPI spec it was compiled from. Together they let arm A show the model the very
+// same tool names, descriptions and input schemas, and call the same HTTP operations.
 const HTTP_METHODS = ['get', 'post', 'put', 'patch', 'delete'];
 
 function apiTools(cfg: QaConfig) {
-  const tools: Record<string, any> = {};
-  for (const api of SPEC_NAMES) {
-    const spec = JSON.parse(readFileSync(join(import.meta.dir, 'specs', `${api}.json`), 'utf8'));
-    const base = (cfg.apiBaseUrl ?? spec.servers?.[0]?.url ?? '').replace(/\/+$/, '');
-    for (const [path, item] of Object.entries<any>(spec.paths ?? {})) {
-      for (const method of HTTP_METHODS) {
-        const op = item?.[method];
-        if (!op?.operationId) continue;
-        const params: any[] = [...(item.parameters ?? []), ...(op.parameters ?? [])];
-        const shape: Record<string, z.ZodTypeAny> = {};
-        for (const p of params) {
-          let s: z.ZodTypeAny = ['integer', 'number'].includes(p.schema?.type) ? z.number() : z.string();
-          if (p.description) s = s.describe(p.description);
-          shape[p.name] = p.required ? s : s.optional();
-        }
-        if (op.requestBody) shape.body = z.record(z.string(), z.any()).describe('JSON request body');
-        const id = op.operationId;
-        tools[id] = createTool({
-          id,
-          description: [op.summary, op.description].filter(Boolean).join('. '),
-          inputSchema: z.object(shape),
-          execute: async (input: any) => {
-            // This agent is read-only. Through Fabric the Agent Scope Gate plugin enforces that;
-            // in the direct arm we enforce it here so the baseline cannot modify data.
-            if (method !== 'get') return { error: 'Blocked: this agent has read-only access.' };
-            let url = path.replace(/\{(\w+)\}/g, (_, k) => encodeURIComponent(String(input[k])));
-            const query = params.filter((p) => p.in === 'query' && input[p.name] !== undefined);
-            if (query.length) url += '?' + new URLSearchParams(query.map((p) => [p.name, String(input[p.name])])).toString();
-            const res = await fetch(base + url);
-            const text = await res.text();
-            // Safety net so one careless call (e.g. listing 60k users) cannot overflow the context.
-            if (text.length > 40000) return { error: 'Response too large, truncated. Use a more specific lookup.', status: res.status, head: text.slice(0, 2000) };
-            try {
-              return JSON.parse(text);
-            } catch {
-              return { status: res.status, body: text };
-            }
-          },
-        });
-      }
+  const spec = JSON.parse(readFileSync(join(import.meta.dir, 'specs', 'demo-apis.json'), 'utf8'));
+  const bridge: { name: string; description: string; inputSchema: any }[] = JSON.parse(
+    readFileSync(join(import.meta.dir, 'specs', 'bridge-tools.json'), 'utf8'),
+  );
+  const base = (cfg.apiBaseUrl ?? spec.servers?.[0]?.url ?? '').replace(/\/+$/, '');
+  const ops = new Map<string, { path: string; method: string; params: any[]; hasBody: boolean }>();
+  for (const [path, item] of Object.entries<any>(spec.paths ?? {})) {
+    for (const method of HTTP_METHODS) {
+      const op = item?.[method];
+      if (op?.operationId) ops.set(op.operationId, { path, method, params: [...(item.parameters ?? []), ...(op.parameters ?? [])], hasBody: !!op.requestBody });
     }
+  }
+  const tools: Record<string, any> = {};
+  for (const def of bridge) {
+    const op = ops.get(def.name);
+    if (!op) continue;
+    const id = `apis_${def.name}`; // same names Mastra gives the MCP tools (server key "apis")
+    tools[id] = createTool({
+      id,
+      description: def.description,
+      inputSchema: jsonSchema(def.inputSchema) as any,
+      execute: async (input: any) => {
+        // This agent is read-only. Through Fabric the Agent Scope Gate plugin enforces that;
+        // in the direct arm we enforce it here so the baseline cannot modify data.
+        if (op.method !== 'get') return { error: 'Blocked: this agent has read-only access.' };
+        let url = op.path.replace(/\{(\w+)\}/g, (_, k) => encodeURIComponent(String(input[k])));
+        const query = op.params.filter((p) => p.in === 'query' && input[p.name] !== undefined);
+        if (query.length) url += '?' + new URLSearchParams(query.map((p) => [p.name, String(input[p.name])])).toString();
+        const res = await fetch(base + url);
+        // Return the raw body text, like the MCP bridge does, so result formatting (and tokens) match.
+        const text = await res.text();
+        if (text.length > 40000) return 'Response too large, truncated. Use a more specific lookup.\n' + text.slice(0, 2000);
+        return res.ok ? text : `HTTP ${res.status}: ${text}`;
+      },
+    });
   }
   return tools;
 }
@@ -168,7 +164,8 @@ function reportFraudTool(cfg: QaConfig, runId: string, onReport?: (r: FraudRepor
 
 function mcpServerDef(cfg: QaConfig) {
   const headers: Record<string, string> = {};
-  if (cfg.gatewayKey) headers['Authorization'] = `Bearer ${cfg.gatewayKey}`;
+  // Fabric HTTP and MCP routes take the gateway key in `fg-api-key` (the LLM route takes Authorization: Bearer).
+  if (cfg.gatewayKey) headers['fg-api-key'] = cfg.gatewayKey;
   if (cfg.mcpToken) headers['Authorization'] = `Bearer ${cfg.mcpToken}`;
   return { url: new URL(cfg.mcpUrl!), requestInit: { headers } };
 }
