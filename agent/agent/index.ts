@@ -1,5 +1,5 @@
 /**
- * qa-agent - Describe what your agent does in one sentence.
+ * fraud-agent - Reviews orders against a plain-English fraud policy and reports suspicious ones to a webhook.
  *
  * This agent uses Mastra's Agent class with the Astro adapter to connect
  * to the Astro messaging service via gRPC.
@@ -9,7 +9,7 @@
  *   GRPC_SERVER_ADDR - injected by Astro messaging service
  */
 
-import { createQaAgent, loadConfig } from './qa-agent';
+import { createFraudAgent, loadConfig } from './fraud-agent';
 import { Mastra } from '@mastra/core/mastra';
 import { Memory } from '@mastra/memory';
 import { LibSQLStore } from '@mastra/libsql';
@@ -40,7 +40,7 @@ function resolveOtlpTracesEndpoint(): string {
 const observability = new Observability({
   configs: {
     otel: {
-      serviceName: 'qa-agent',
+      serviceName: 'fraud-agent',
       exporters: [
         new OtelExporter({
           provider: {
@@ -56,7 +56,7 @@ const observability = new Observability({
 });
 
 // Same agent the benchmark harness runs; only env vars differ between arms.
-const { agent } = await createQaAgent(loadConfig(), {
+const { agent } = await createFraudAgent(loadConfig(), {
   memory,
   // Ensure traces include stable Astro metadata by default.
   // The collector endpoint (OTEL_EXPORTER_OTLP_ENDPOINT) is injected in deployed
@@ -64,9 +64,9 @@ const { agent } = await createQaAgent(loadConfig(), {
   // is a silent no-op.
   defaultOptions: {
     tracingOptions: {
-      tags: ['astro', 'agent:qa-agent'],
+      tags: ['astro', 'agent:fraud-agent'],
       metadata: {
-        agent_id: 'qa-agent',
+        agent_id: 'fraud-agent',
       },
     },
   },
@@ -76,7 +76,7 @@ const { agent } = await createQaAgent(loadConfig(), {
 // `serve(agent)` handles request serving; this constructor call wires runtime integration.
 new Mastra({
   agents: {
-    'qa-agent': agent,
+    'fraud-agent': agent,
   },
   observability,
 });

@@ -1,0 +1,526 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "Users API",
+        "version": "1.0.0",
+        "description": "Demo users service for the Postman API Catalog walkthrough.\n\nOptional query parameters on all endpoints except /openapi.json:\n- delay or wait: milliseconds to wait before responding (max 30000)\n- status or error: HTTP status code to return (e.g. 500); error=true also returns 500"
+    },
+    "servers": [
+        {
+            "url": "https://18-157-170-15.nip.io",
+            "description": "Deployed worker"
+        }
+    ],
+    "tags": [
+        {
+            "name": "Users",
+            "description": "User management"
+        },
+        {
+            "name": "System",
+            "description": "Health and metadata"
+        }
+    ],
+    "paths": {
+        "/health": {
+            "get": {
+                "tags": [
+                    "System"
+                ],
+                "operationId": "getHealth",
+                "summary": "Health check",
+                "responses": {
+                    "200": {
+                        "description": "Service is healthy",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HealthResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError"
+                    }
+                }
+            }
+        },
+        "/openapi.json": {
+            "get": {
+                "tags": [
+                    "System"
+                ],
+                "operationId": "getOpenApi",
+                "summary": "OpenAPI specification",
+                "responses": {
+                    "200": {
+                        "description": "OpenAPI document",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError"
+                    }
+                }
+            }
+        },
+        "/users": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "operationId": "listUsers",
+                "summary": "List users",
+                "responses": {
+                    "200": {
+                        "description": "User list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserListResponse"
+                                },
+                                "example": {
+                                    "data": [
+                                        {
+                                            "id": "usr-001",
+                                            "name": "Alice Chen",
+                                            "email": "alice@example.com",
+                                            "role": "customer"
+                                        }
+                                    ],
+                                    "count": 1
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Users"
+                ],
+                "operationId": "createUser",
+                "summary": "Create user",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateUserRequest"
+                            },
+                            "example": {
+                                "name": "QA Test User",
+                                "email": "qa.test@example.com",
+                                "role": "customer"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User created",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/User"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError"
+                    }
+                }
+            }
+        },
+        "/users/{id}": {
+            "parameters": [
+                {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "description": "User identifier",
+                    "schema": {
+                        "type": "string",
+                        "example": "usr-001"
+                    }
+                }
+            ],
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "operationId": "getUser",
+                "summary": "Get user by ID",
+                "responses": {
+                    "200": {
+                        "description": "User found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/User"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError"
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Users"
+                ],
+                "operationId": "updateUser",
+                "summary": "Replace user",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateUserRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "User updated",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/User"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError"
+                    }
+                }
+            },
+            "patch": {
+                "tags": [
+                    "Users"
+                ],
+                "operationId": "patchUser",
+                "summary": "Partially update user",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchUserRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "User patched",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/User"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError"
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Users"
+                ],
+                "operationId": "deleteUser",
+                "summary": "Delete user",
+                "responses": {
+                    "204": {
+                        "description": "User deleted"
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "$ref": "#/components/responses/InternalServerError"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "HealthResponse": {
+                "type": "object",
+                "required": [
+                    "status",
+                    "service",
+                    "version"
+                ],
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "ok"
+                        ],
+                        "example": "ok"
+                    },
+                    "service": {
+                        "type": "string",
+                        "example": "users-api"
+                    },
+                    "version": {
+                        "type": "string",
+                        "example": "1.0.0"
+                    }
+                }
+            },
+            "UserRole": {
+                "type": "string",
+                "enum": [
+                    "customer",
+                    "admin"
+                ],
+                "example": "customer"
+            },
+            "User": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "name",
+                    "email",
+                    "role"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "Unique user identifier",
+                        "example": "usr-001"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "Display name",
+                        "example": "Alice Chen"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "alice@example.com"
+                    },
+                    "role": {
+                        "$ref": "#/components/schemas/UserRole"
+                    }
+                }
+            },
+            "UserListResponse": {
+                "type": "object",
+                "required": [
+                    "data",
+                    "count"
+                ],
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/User"
+                        }
+                    },
+                    "count": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "example": 3
+                    }
+                }
+            },
+            "CreateUserRequest": {
+                "type": "object",
+                "required": [
+                    "name",
+                    "email"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "QA Test User"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "qa.test@example.com"
+                    },
+                    "role": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/UserRole"
+                            }
+                        ],
+                        "default": "customer"
+                    }
+                }
+            },
+            "UpdateUserRequest": {
+                "type": "object",
+                "required": [
+                    "name",
+                    "email",
+                    "role"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "QA Updated User"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "qa.updated@example.com"
+                    },
+                    "role": {
+                        "$ref": "#/components/schemas/UserRole"
+                    }
+                }
+            },
+            "PatchUserRequest": {
+                "type": "object",
+                "minProperties": 1,
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email"
+                    },
+                    "role": {
+                        "$ref": "#/components/schemas/UserRole"
+                    }
+                }
+            },
+            "ErrorResponse": {
+                "type": "object",
+                "required": [
+                    "error"
+                ],
+                "properties": {
+                    "error": {
+                        "type": "string",
+                        "example": "User not found"
+                    },
+                    "service": {
+                        "type": "string",
+                        "example": "users-api"
+                    }
+                }
+            },
+            "ServerErrorResponse": {
+                "type": "object",
+                "required": [
+                    "error"
+                ],
+                "properties": {
+                    "error": {
+                        "type": "string",
+                        "example": "Simulated response for API Catalog demo"
+                    },
+                    "status": {
+                        "type": "integer",
+                        "example": 500
+                    },
+                    "simulated": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "service": {
+                        "type": "string",
+                        "example": "users-api"
+                    },
+                    "delayMs": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "responses": {
+            "InternalServerError": {
+                "description": "Internal server error. Simulatable with ?status=500 on any endpoint except /openapi.json.",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "$ref": "#/components/schemas/ServerErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
