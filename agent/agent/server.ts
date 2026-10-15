@@ -5,16 +5,21 @@
  *
  *   GET  /health
  *   GET  /arms                           what each arm changes
- *   POST /review {"arm":"B","live":false,"maxSteps":40}
+ *   POST /review {"arm":"B","live":false,"maxSteps":40}   -> 202 {runId, statusUrl}; a review takes 20-60 s,
+ *                                                             longer than gateways and proxies wait, so it runs in the background
+ *   GET  /runs/{runId}                                       -> {status:"running"} or the finished result
+ *   (add "wait": true to POST /review to hold the connection and get the result directly, for local use)
  *
  * `live: false` (default) never calls the webhook. Set DEMO_API_KEY to require `x-demo-key` on /review.
  */
 
+import { randomUUID } from 'node:crypto';
 import { ARMS, armConfig, isArm, runReview } from './review';
 
 const port = Number(process.env.PORT ?? 8787);
 const demoKey = process.env.DEMO_API_KEY || undefined;
 let busy = false; // one review at a time: keeps traces readable and cost predictable
+const runs = new Map<string, any>(); // finished and running reviews, in memory
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body, null, 2), { status, headers: { 'Content-Type': 'application/json' } });
@@ -43,12 +48,21 @@ Bun.serve({
       }
       if (busy) return json({ error: 'A review is already running, try again in a minute.' }, 409);
       busy = true;
-      try {
-        const { record, truth } = await runReview(arm, cfg, { live: body.live === true, maxSteps: Number(body.maxSteps ?? 40) });
-        return json({ ...ARMS[arm], ...record, truth });
-      } finally {
-        busy = false;
-      }
+      const id = randomUUID();
+      const work = runReview(arm, cfg, { live: body.live === true, maxSteps: Number(body.maxSteps ?? 40) })
+        .then(({ record, truth }) => ({ ...ARMS[arm], ...record, truth, status: 'done', runId: id }))
+        .catch((e) => ({ arm, status: 'error', error: String(e?.message ?? e) }))
+        .finally(() => (busy = false));
+      runs.set(id, { status: 'running', arm });
+      work.then((r) => runs.set(id, r));
+      if (body.wait === true) return json(await work);
+      return json({ runId: id, arm, status: 'running', statusUrl: `/runs/${id}` }, 202);
+    }
+    const m = pathname.match(/^\/runs\/([\w-]+)$/);
+    if (req.method === 'GET' && m) {
+      if (demoKey && req.headers.get('x-demo-key') !== demoKey) return json({ error: 'Missing or wrong x-demo-key' }, 401);
+      const r = runs.get(m[1]);
+      return r ? json(r) : json({ error: 'Unknown run id' }, 404);
     }
     return json({ error: 'Not found. Try GET /arms or POST /review' }, 404);
   },
