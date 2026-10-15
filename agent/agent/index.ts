@@ -16,6 +16,8 @@ import { LibSQLStore } from '@mastra/libsql';
 import { Observability } from '@mastra/observability';
 import { OtelExporter } from '@mastra/otel-exporter';
 import { serve } from '@astropods/adapter-mastra';
+// Also start the HTTP API (POST /review) so the agent can be called from Postman or curl.
+import './server';
 
 const memory = new Memory({
   storage: new LibSQLStore({

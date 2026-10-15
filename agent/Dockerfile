@@ -31,5 +31,9 @@ COPY --from=builder /app/package.json ./
 RUN chown -R bun:bun /app
 USER bun
 
+# HTTP API (agent/server.ts) must listen on port 80 in production (frontend interface)
+ENV PORT=80
+EXPOSE 80
+
 # Run the agent
 CMD ["bun", "run", "agent/index.ts"]

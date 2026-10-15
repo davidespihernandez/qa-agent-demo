@@ -6,6 +6,43 @@ agent:
   build:
     context: .
     dockerfile: Dockerfile
+  # Built-in chat (messaging) plus our own HTTP API on port 80 (POST /review) for Postman and curl.
+  interfaces:
+    frontend: true
+    messaging: true
+  # Env vars the platform injects into the container. ANTHROPIC_API_KEY comes from the model below.
+  inputs:
+    - name: LLM_BASE_URL
+      datatype: string
+      description: Fabric LLM route, e.g. https://<host>/anthropic (arms B, B-ro, C)
+      optional: true
+    - name: FABRIC_GATEWAY_KEY
+      datatype: string
+      secret: true
+      description: Fabric gateway key (Bearer on the LLM route, fg-api-key on MCP routes)
+      optional: true
+    - name: MCP_URL
+      datatype: string
+      description: Fabric MCP route with all tools (arm B)
+      optional: true
+    - name: MCP_URL_READONLY
+      datatype: string
+      description: Fabric MCP route with read-only tools (arm B-ro)
+      optional: true
+    - name: MCP_URL_SEARCH
+      datatype: string
+      description: Fabric MCP route with Tool Search (arm C)
+      optional: true
+    - name: FRAUD_WEBHOOK_URL
+      datatype: string
+      secret: true
+      description: Postman Flow webhook, only called on live runs
+      optional: true
+    - name: DEMO_API_KEY
+      datatype: string
+      secret: true
+      description: Required in the x-demo-key header of POST /review
+      optional: true
 
 models:
   anthropic:
@@ -13,5 +50,7 @@ models:
 
 dev:
   interfaces:
+    frontend:
+      port: 8787
     messaging:
       adapters: [web]
