@@ -10,6 +10,7 @@
  */
 
 import { createFraudAgent, loadConfig } from './fraud-agent';
+import { armConfig } from './review';
 import { Mastra } from '@mastra/core/mastra';
 import { Memory } from '@mastra/memory';
 import { LibSQLStore } from '@mastra/libsql';
@@ -58,7 +59,7 @@ const observability = new Observability({
 });
 
 // Same agent the benchmark harness runs; only env vars differ between arms.
-const { agent } = await createFraudAgent(loadConfig(), {
+const extras = {
   memory,
   // Ensure traces include stable Astro metadata by default.
   // The collector endpoint (OTEL_EXPORTER_OTLP_ENDPOINT) is injected in deployed
@@ -72,7 +73,16 @@ const { agent } = await createFraudAgent(loadConfig(), {
       },
     },
   },
-});
+};
+let created;
+try {
+  created = await createFraudAgent(loadConfig(), extras);
+} catch (e: any) {
+  // The chat agent must come up even if the gateway is unreachable: fall back to the direct arm.
+  console.error(`Chat agent could not start with the configured gateway (${e?.message}); falling back to direct mode.`);
+  created = await createFraudAgent(armConfig('A'), extras);
+}
+const { agent } = created;
 
 // Instantiate Mastra so it registers agents/observability plugins at startup.
 // `serve(agent)` handles request serving; this constructor call wires runtime integration.
