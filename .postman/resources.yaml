@@ -5,6 +5,5 @@ workspace:
 localResources:
   collections:
     - ../postman/collections/Fraud agent - arms
-    - ../agent/postman/collections/Messaging Web API
   specs:
     - ../agent/agent/specs/demo-apis.json
