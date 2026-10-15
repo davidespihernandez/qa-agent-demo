@@ -1,0 +1,10 @@
+# Use this workspace to collaborate
+workspace:
+  id: daa10097-3930-4947-bb9c-442c1c7a4d22
+
+localResources:
+  collections:
+    - ../postman/collections/Fraud agent - arms
+    - ../agent/postman/collections/Messaging Web API
+  specs:
+    - ../agent/agent/specs/demo-apis.json

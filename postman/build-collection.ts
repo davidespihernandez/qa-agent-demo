@@ -1,12 +1,12 @@
-/** Generates fraud-agent.postman_collection.json (run: bun postman/build-collection.ts). */
-import { writeFileSync } from 'node:fs';
+/** Generates the Postman v3 (YAML) collection in postman/collections/ (run: bun postman/build-collection.ts). */
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const arms = [
-  ['A', 'A · Direct to Anthropic', 'The agent calls Anthropic and the APIs itself. Nothing in between: the baseline.'],
-  ['B', 'B · Through Fabric', 'Same agent, same task. LLM and API tools now go through Fabric: gateway key, traces, governance. Expect ~the same tokens.'],
-  ['B-ro', 'B-ro · Fabric, read-only tools', 'Fabric exposes only the 8 GET operations to this agent. Fewer tool definitions per call, and it cannot write even if it wanted to.'],
-  ['C', 'C · Fabric + Tool Search', 'Fabric hides the catalog behind a search tool; the model fetches only the tools it needs.'],
+  ['A', '1. A - Direct to Anthropic', 'The agent calls Anthropic and the APIs itself. Nothing in between: the baseline.'],
+  ['B', '2. B - Through Fabric', 'Same agent, same task. LLM and API tools now go through Fabric: gateway key, traces, governance. Expect ~the same tokens.'],
+  ['B-ro', '3. B-ro - Fabric, read-only tools', 'Fabric exposes only the 8 GET operations to this agent. Fewer tool definitions per call, and it cannot write even if it wanted to.'],
+  ['C', '4. C - Fabric + Tool Search', 'Fabric hides the catalog behind a search tool; the model fetches only the tools it needs.'],
 ];
 
 const test = (arm: string) => [
@@ -29,42 +29,44 @@ const compareTest = [
   'pm.visualizer.set(`<style>body{font-family:sans-serif;font-size:14px}td,th{padding:4px 12px;text-align:right}th:first-child,td:first-child{text-align:left}</style><h3>Same agent, same task: what changed per arm</h3><table><tr><th>Arm</th><th>Verdict</th><th>Tools sent</th><th>Input tokens</th><th>vs A</th><th>Output</th><th>Est. cost</th><th>Time</th></tr>${tr}</table>`);',
 ];
 
-const item = (name: string, method: string, path: string, desc: string, body?: object, events: string[] = []) => ({
-  name,
-  event: events.length ? [{ listen: 'test', script: { type: 'text/javascript', exec: events } }] : [],
-  request: {
-    method,
-    header: [
-      { key: 'Content-Type', value: 'application/json' },
-      { key: 'x-demo-key', value: '{{demoKey}}', disabled: false },
-    ],
-    url: { raw: `{{baseUrl}}${path}`, host: ['{{baseUrl}}'], path: path.split('/').filter(Boolean) },
-    description: desc,
-    ...(body ? { body: { mode: 'raw', raw: JSON.stringify(body, null, 2) } } : {}),
-  },
-});
+const dir = join(import.meta.dir, 'collections', 'Fraud agent - arms');
+rmSync(dir, { recursive: true, force: true });
+mkdirSync(join(dir, '.resources'), { recursive: true });
 
-const collection = {
-  info: {
-    name: 'Fraud agent: arms',
-    schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
-    description:
-      'Runs the same fraud-review agent through each path. Only the arm changes. Run the requests in order (or the whole folder with the Collection Runner), then open "Compare arms" and its Visualize tab. dryRun by default: the webhook is not called.',
-  },
-  variable: [
-    { key: 'baseUrl', value: 'http://localhost:8787' },
-    { key: 'demoKey', value: '' },
-  ],
-  item: [
-    item('What does each arm change?', 'GET', '/arms', 'Plain-English description of every arm and whether it is configured on this server.'),
-    {
-      name: 'Run the arms',
-      item: arms.map(([arm, name, desc]) => item(name, 'POST', '/review', desc, { arm, live: false }, test(arm))),
-    },
-    item('Compare arms', 'GET', '/arms', 'Open the Visualize tab: a table built from the runs above.', undefined, compareTest),
-    item('LIVE: A run that fires the Postman webhook', 'POST', '/review', 'Only for the show-and-tell. Sends one alert per fraudulent order to the Flow webhook (Idempotency-Key header).', { arm: 'B', live: true }),
-  ],
-};
+const q = (s: string) => JSON.stringify(s); // JSON strings are valid YAML scalars
+const block = (lines: string[], pad: string) => lines.map((l) => pad + l).join('\n');
 
-writeFileSync(join(import.meta.dir, 'fraud-agent.postman_collection.json'), JSON.stringify(collection, null, 2));
-console.log('written');
+function request(order: number, name: string, method: string, path: string, desc: string, body?: object, script?: string[]) {
+  const y = [
+    '$kind: http-request',
+    `description: ${q(desc)}`,
+    `url: ${q('{{baseUrl}}' + path)}`,
+    `method: ${method}`,
+    'headers:',
+    '  Content-Type: application/json',
+    '  x-demo-key: "{{demoKey}}"',
+  ];
+  if (body) y.push('body:', '  type: json', '  content: |-', block(JSON.stringify(body, null, 2).split('\n'), '    '));
+  if (script) y.push('scripts:', '  - type: afterResponse', '    code: |-', block(script, '      '), '    language: text/javascript');
+  y.push(`order: ${order}`);
+  writeFileSync(join(dir, `${name}.request.yaml`), y.join('\n') + '\n');
+}
+
+writeFileSync(
+  join(dir, '.resources', 'definition.yaml'),
+  [
+    '$kind: collection',
+    'description: >-',
+    '  Runs the same fraud-review agent through each path; only the arm changes. Run the arm requests in order',
+    '  (or use the Collection Runner), then open "Compare arms" and its Visualize tab. Dry run by default: the webhook is not called.',
+    'variables:',
+    '  baseUrl: http://localhost:8787',
+    '  demoKey: ""',
+  ].join('\n') + '\n',
+);
+
+request(1000, '0. What does each arm change', 'GET', '/arms', 'Plain-English description of every arm and whether it is configured on this server.');
+arms.forEach(([arm, name, desc], i) => request(2000 + i * 1000, name, 'POST', '/review', desc, { arm, live: false }, test(arm)));
+request(7000, '5. Compare arms', 'GET', '/arms', 'Open the Visualize tab: a table built from the runs above.', undefined, compareTest);
+request(8000, '6. LIVE - fire the Postman webhook', 'POST', '/review', 'Only for the show-and-tell. Sends one alert per fraudulent order to the Flow webhook (Idempotency-Key header).', { arm: 'B', live: true });
+console.log('written', dir);

@@ -1,0 +1,28 @@
+$kind: http-request
+description: "Fabric exposes only the 8 GET operations to this agent. Fewer tool definitions per call, and it cannot write even if it wanted to."
+url: "{{baseUrl}}/review"
+method: POST
+headers:
+  Content-Type: application/json
+  x-demo-key: "{{demoKey}}"
+body:
+  type: json
+  content: |-
+    {
+      "arm": "B-ro",
+      "live": false
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      const r = pm.response.json();
+      pm.test('Agent flagged exactly the right orders', () => pm.expect(r.verdict).to.eql('pass'));
+      pm.collectionVariables.set('res_B-ro', JSON.stringify({ arm: r.arm, verdict: r.verdict, tools: r.toolCount, steps: r.steps,
+        inTok: r.usage && r.usage.inputTokens, outTok: r.usage && r.usage.outputTokens, cost: r.estimatedCostUsd, sec: Math.round(r.ms / 1000) }));
+      const t = `<style>body{font-family:sans-serif;font-size:14px}td,th{padding:4px 10px;text-align:right}th:first-child,td:first-child{text-align:left}</style>
+      <h3>Arm ${r.arm}: ${r.title}</h3><p>${r.llm}<br>${r.tools}</p>
+      <table><tr><th>Verdict</th><th>Tools sent</th><th>Steps</th><th>Input tokens</th><th>Output tokens</th><th>Est. cost</th><th>Time</th></tr>
+      <tr><td>${r.verdict}</td><td>${r.toolCount}</td><td>${r.steps}</td><td>${r.usage && r.usage.inputTokens}</td><td>${r.usage && r.usage.outputTokens}</td><td>$${r.estimatedCostUsd && r.estimatedCostUsd.toFixed(3)}</td><td>${Math.round(r.ms/1000)}s</td></tr></table>`;
+      pm.visualizer.set(t);
+    language: text/javascript
+order: 4000

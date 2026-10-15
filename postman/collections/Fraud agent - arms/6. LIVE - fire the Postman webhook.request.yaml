@@ -1,0 +1,15 @@
+$kind: http-request
+description: "Only for the show-and-tell. Sends one alert per fraudulent order to the Flow webhook (Idempotency-Key header)."
+url: "{{baseUrl}}/review"
+method: POST
+headers:
+  Content-Type: application/json
+  x-demo-key: "{{demoKey}}"
+body:
+  type: json
+  content: |-
+    {
+      "arm": "B",
+      "live": true
+    }
+order: 8000

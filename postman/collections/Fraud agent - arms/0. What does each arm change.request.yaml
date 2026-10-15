@@ -1,0 +1,8 @@
+$kind: http-request
+description: "Plain-English description of every arm and whether it is configured on this server."
+url: "{{baseUrl}}/arms"
+method: GET
+headers:
+  Content-Type: application/json
+  x-demo-key: "{{demoKey}}"
+order: 1000
