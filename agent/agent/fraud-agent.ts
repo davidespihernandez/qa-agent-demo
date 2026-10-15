@@ -194,6 +194,8 @@ export async function createFraudAgent(
   const runId = randomUUID();
   const mcp = cfg.mcpUrl ? new MCPClient({ id: 'fraud-apis', servers: { apis: mcpServerDef(cfg) } }) : undefined;
   const apiToolset = mcp ? await mcp.listTools() : apiTools(cfg);
+  // Mastra logs MCP connection errors and carries on with zero tools: fail loudly instead of running a blind agent.
+  if (mcp && Object.keys(apiToolset).length === 0) throw new Error(`No tools came back from the MCP server ${cfg.mcpUrl}`);
   const tools = { ...apiToolset, report_fraud: reportFraudTool(cfg, runId, onReport) };
   const agent = new Agent({
     id: 'fraud-agent',

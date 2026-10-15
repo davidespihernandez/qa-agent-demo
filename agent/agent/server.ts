@@ -24,6 +24,8 @@ const runs = new Map<string, any>(); // finished and running reviews, in memory
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body, null, 2), { status, headers: { 'Content-Type': 'application/json' } });
 
+process.on('unhandledRejection', (e) => console.error('unhandled rejection:', e));
+
 Bun.serve({
   port,
   idleTimeout: 255, // seconds; a review takes 20-60 s
@@ -49,14 +51,44 @@ Bun.serve({
       if (busy) return json({ error: 'A review is already running, try again in a minute.' }, 409);
       busy = true;
       const id = randomUUID();
-      const work = runReview(arm, cfg, { live: body.live === true, maxSteps: Number(body.maxSteps ?? 40) })
-        .then(({ record, truth }) => ({ ...ARMS[arm], ...record, truth, status: 'done', runId: id }))
-        .catch((e) => ({ arm, status: 'error', error: String(e?.message ?? e) }))
-        .finally(() => (busy = false));
+      const work = (async () => {
+        try {
+          const timeout = new Promise<never>((_, rej) => setTimeout(() => rej(new Error('Review timed out after 240 s')), 240_000));
+          const { record, truth } = await Promise.race([runReview(arm, cfg, { live: body.live === true, maxSteps: Number(body.maxSteps ?? 40) }), timeout]);
+          return { ...ARMS[arm], ...record, truth, status: 'done', runId: id };
+        } catch (e: any) {
+          return { arm, status: 'error', error: String(e?.message ?? e), runId: id };
+        } finally {
+          busy = false;
+        }
+      })();
       runs.set(id, { status: 'running', arm });
       work.then((r) => runs.set(id, r));
       if (body.wait === true) return json(await work);
       return json({ runId: id, arm, status: 'running', statusUrl: `/runs/${id}` }, 202);
+    }
+    if (req.method === 'GET' && pathname === '/diag') {
+      // Times each network hop from wherever this server runs (useful on Astro, where we cannot curl from the pod).
+      if (demoKey && req.headers.get('x-demo-key') !== demoKey) return json({ error: 'Missing or wrong x-demo-key' }, 401);
+      const hop = async (name: string, url: string | undefined, init: RequestInit = {}) => {
+        if (!url) return { name, skipped: true };
+        const t = Date.now();
+        try {
+          const r = await fetch(url, { ...init, signal: AbortSignal.timeout(15000) });
+          return { name, status: r.status, ms: Date.now() - t };
+        } catch (e: any) {
+          return { name, error: String(e?.message ?? e), ms: Date.now() - t };
+        }
+      };
+      const key = process.env.FABRIC_GATEWAY_KEY ?? '';
+      const init = { jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'diag', version: '0' } } };
+      const api = process.env.API_BASE_URL || 'https://18-157-170-15.nip.io';
+      return json(await Promise.all([
+        hop('orders api /health', api + '/health'),
+        hop('fabric mcp initialize', process.env.MCP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream', 'fg-api-key': key }, body: JSON.stringify(init) }),
+        hop('fabric llm route (no auth, expect 401/404)', process.env.LLM_BASE_URL ? process.env.LLM_BASE_URL + '/v1/models' : undefined),
+        hop('anthropic direct (expect 401)', 'https://api.anthropic.com/v1/models'),
+      ]));
     }
     const m = pathname.match(/^\/runs\/([\w-]+)$/);
     if (req.method === 'GET' && m) {

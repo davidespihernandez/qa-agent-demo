@@ -8,7 +8,8 @@ WORKDIR /app
 # because it sits outside the adapters workspace, so no adapter release pins it.
 ARG ASTRO_SDK_CHANNEL=latest
 
-COPY package.json ./
+# bun.lock pins the dependency versions we tested (a newer MCP client breaks against Fabric's MCP route)
+COPY package.json bun.lock* ./
 RUN if [ "$ASTRO_SDK_CHANNEL" != "latest" ]; then \
       bun -e 'const fs=require("fs");const c=process.env.ASTRO_SDK_CHANNEL;const p=JSON.parse(fs.readFileSync("package.json","utf8"));for(const d of Object.keys(p.dependencies||{}))if(d.startsWith("@astropods/"))p.dependencies[d]=c;p.overrides={...p.overrides,"@astropods/messaging":c};fs.writeFileSync("package.json",JSON.stringify(p,null,2)+"\n")'; \
     fi
