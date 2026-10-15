@@ -6,7 +6,7 @@
 const U = process.argv[2], Q = process.argv[3], K = process.env.FABRIC_GATEWAY_KEY!;
 if (!U) throw new Error('usage: mcp-probe.ts <mcp-url> ["query"]');
 async function post(body: any, sid?: string) {
-  const h: Record<string, string> = { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream', 'fg-api-key': K };
+  const h: Record<string, string> = { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream', [process.env.FABRIC_KEY_HEADER || 'fg-api-key']: K };
   if (sid) h['mcp-session-id'] = sid;
   const r = await fetch(U, { method: 'POST', headers: h, body: JSON.stringify(body) });
   let t = await r.text();

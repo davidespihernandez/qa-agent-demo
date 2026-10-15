@@ -85,7 +85,7 @@ Bun.serve({
       const api = process.env.API_BASE_URL || 'https://18-157-170-15.nip.io';
       return json(await Promise.all([
         hop('orders api /health', api + '/health'),
-        hop('fabric mcp initialize', process.env.MCP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream', 'fg-api-key': key }, body: JSON.stringify(init) }),
+        hop('fabric mcp initialize', process.env.MCP_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream', [process.env.FABRIC_KEY_HEADER || 'fg-api-key']: key }, body: JSON.stringify(init) }),
         hop('fabric llm route (no auth, expect 401/404)', process.env.LLM_BASE_URL ? process.env.LLM_BASE_URL + '/v1/models' : undefined),
         hop('anthropic direct (expect 401)', 'https://api.anthropic.com/v1/models'),
       ]));

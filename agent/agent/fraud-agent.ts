@@ -46,6 +46,10 @@ export type QaConfig = {
   llmBaseUrl?: string;
   llmApiKey?: string;
   gatewayKey?: string;
+  /** Header that carries the gateway key on HTTP/MCP routes. Beta: fg-api-key (default). Production docs: X-Gateway-Key. */
+  keyHeader?: string;
+  /** If set, the LLM route takes the gateway key in this header instead of Authorization: Bearer. */
+  llmKeyHeader?: string;
   mcpUrl?: string;
   mcpToken?: string;
   apiBaseUrl?: string;
@@ -58,6 +62,8 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     llmBaseUrl: env.LLM_BASE_URL || undefined,
     llmApiKey: env.ANTHROPIC_API_KEY || undefined,
     gatewayKey: env.FABRIC_GATEWAY_KEY || undefined,
+    keyHeader: env.FABRIC_KEY_HEADER || undefined,
+    llmKeyHeader: env.FABRIC_LLM_KEY_HEADER || undefined,
     mcpUrl: env.MCP_URL || undefined,
     mcpToken: env.MCP_TOKEN || undefined,
     apiBaseUrl: env.API_BASE_URL || undefined,
@@ -165,7 +171,7 @@ function reportFraudTool(cfg: QaConfig, runId: string, onReport?: (r: FraudRepor
 function mcpServerDef(cfg: QaConfig) {
   const headers: Record<string, string> = {};
   // Fabric HTTP and MCP routes take the gateway key in `fg-api-key` (the LLM route takes Authorization: Bearer).
-  if (cfg.gatewayKey) headers['fg-api-key'] = cfg.gatewayKey;
+  if (cfg.gatewayKey) headers[cfg.keyHeader ?? 'fg-api-key'] = cfg.gatewayKey;
   if (cfg.mcpToken) headers['Authorization'] = `Bearer ${cfg.mcpToken}`;
   return { url: new URL(cfg.mcpUrl!), requestInit: { headers } };
 }
@@ -181,7 +187,7 @@ function modelDef(cfg: QaConfig) {
     // Anthropic SDK default is https://api.anthropic.com/v1, so the gateway base must end in /v1
     baseURL: cfg.llmBaseUrl ? `${cfg.llmBaseUrl.replace(/\/+$/, '')}/v1` : undefined,
     apiKey: viaGateway ? 'managed-by-fabric' : cfg.llmApiKey,
-    headers: viaGateway ? { Authorization: `Bearer ${cfg.gatewayKey}` } : undefined,
+    headers: viaGateway ? (cfg.llmKeyHeader ? { [cfg.llmKeyHeader]: cfg.gatewayKey! } : { Authorization: `Bearer ${cfg.gatewayKey}` }) : undefined,
   });
   return provider(cfg.model.replace(/^anthropic\//, ''));
 }
