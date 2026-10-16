@@ -6,7 +6,8 @@
  * tools' names and schemas, model, task) is identical across arms.
  */
 
-import { createFraudAgent, loadConfig, type FraudReport, type QaConfig } from './fraud-agent';
+import { createHash } from 'node:crypto';
+import { createFraudAgent, loadConfig, postWebhook, POLICY_VERSION, type Delivery, type FraudReport, type QaConfig } from './fraud-agent';
 import { expectedFlags } from './oracle';
 
 export type Arm = 'A' | 'B' | 'B-ro' | 'C';
@@ -75,7 +76,8 @@ export async function runReview(arm: string, cfg: QaConfig, opts: ReviewOptions 
   const runCfg = { ...cfg, webhookUrl: opts.live ? cfg.webhookUrl : undefined };
   const started = Date.now();
   const reports: FraudReport[] = [];
-  const { agent, mcp, toolCount, runId } = await createFraudAgent(runCfg, {}, (r) => reports.push(r));
+  const alerts: Delivery[] = [];
+  const { agent, mcp, toolCount, runId } = await createFraudAgent(runCfg, {}, (r) => reports.push(r), (d) => alerts.push(d));
   let record: any = { arm, test: 'fraud-review', runId, toolCount, model: cfg.model, live: !!opts.live };
   try {
     const res: any = await agent.generate(PROMPT, { maxSteps: opts.maxSteps ?? 40 });
@@ -95,6 +97,9 @@ export async function runReview(arm: string, cfg: QaConfig, opts: ReviewOptions 
       steps: res.steps?.length ?? null,
       toolCalls: res.toolCalls?.length ?? null,
       summary: String(res.text ?? '').split('\n').filter((l) => l.startsWith('SUMMARY')).pop() ?? null,
+      findings: reports,
+      // What the agent actually did: every tool it called, in order, with the arguments it chose.
+      calls: (res.steps ?? []).flatMap((st: any) => (st.toolCalls ?? []).map((c: any) => ({ tool: c.payload?.toolName ?? c.toolName, args: c.payload?.args ?? c.args }))),
       ms: Date.now() - started,
     };
   } catch (e: any) {
@@ -102,5 +107,34 @@ export async function runReview(arm: string, cfg: QaConfig, opts: ReviewOptions 
   } finally {
     await mcp?.disconnect().catch(() => {});
   }
+  // Every live review ends with ONE summary event to the webhook, fraud or not, so the Flow always hears back.
+  let summary: Delivery = { kind: 'summary', status: 'skipped', response: 'Dry run: the webhook is not called.' };
+  if (opts.live && cfg.webhookUrl) {
+    const reviewed = Number(String(record.summary ?? '').match(/reviewed (\d+)/)?.[1] ?? truth.orders);
+    const payload = {
+      type: 'fraud-review-summary',
+      runId,
+      arm,
+      model: cfg.model,
+      policyVersion: POLICY_VERSION,
+      status: record.verdict === 'error' ? 'error' : 'completed',
+      error: record.verdict === 'error' ? record.reason : undefined,
+      ordersAnalyzed: reviewed,
+      customersChecked: truth.customers,
+      fraudulentOrders: reports.length,
+      cleanOrders: Math.max(reviewed - reports.length, 0),
+      flagged: reports,
+      agentSummary: record.summary ?? null,
+      matchesReferenceCheck: record.verdict === 'pass',
+      usage: record.usage ?? null,
+      estimatedCostUsd: record.estimatedCostUsd ?? null,
+      durationMs: Date.now() - started,
+      completedAt: new Date().toISOString(),
+    };
+    const key = createHash('sha256').update(`summary:${runId}`).digest('hex');
+    summary = { kind: 'summary', ...(await postWebhook(cfg.webhookUrl, key, payload)) };
+    record.sentToWebhook = payload;
+  }
+  record.webhook = { alerts, summary };
   return { record, truth: { orders: truth.orders, customers: truth.customers, known: truth.known, expected: [...truth.expected.keys()] } };
 }

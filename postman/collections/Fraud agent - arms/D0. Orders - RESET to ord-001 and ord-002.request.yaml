@@ -1,0 +1,24 @@
+$kind: http-request
+description: "DESTRUCTIVE on the demo API: deletes every order except ord-001 and ord-002 (it lists them, then deletes the rest). Use it to start a demo from a clean state."
+url: "{{ordersUrl}}/orders"
+method: GET
+headers:
+  Content-Type: application/json
+scripts:
+  - type: afterResponse
+    code: |-
+      const keep = ["ord-001", "ord-002"];
+      const all = pm.response.json().data || [];
+      const extra = all.filter(o => !keep.includes(o.id));
+      const base = pm.variables.replaceIn("{{ordersUrl}}");
+      const out = [];
+      const next = (i) => {
+        if (i >= extra.length) {
+          pm.test("Only ord-001 and ord-002 remain", () => pm.expect(out.filter(x => x.code !== 200 && x.code !== 204).length).to.eql(0));
+          return pm.visualizer.set(`<h3>Orders reset</h3><p>Kept ${keep.join(", ")}. Deleted ${out.length}: ${out.map(x => x.id + " (" + x.code + ")").join(", ") || "nothing to delete"}.</p>`);
+        }
+        pm.sendRequest({ url: base + "/orders/" + extra[i].id, method: "DELETE" }, (err, res) => { out.push({ id: extra[i].id, code: err ? 0 : res.code }); next(i + 1); });
+      };
+      next(0);
+    language: text/javascript
+order: 150

@@ -129,7 +129,27 @@ function apiTools(cfg: QaConfig) {
 
 // ---------- report_fraud: POST to the webhook with an Idempotency-Key ----------
 
-function reportFraudTool(cfg: QaConfig, runId: string, onReport?: (r: FraudReport) => void) {
+export type Delivery = { kind: 'alert' | 'summary'; orderId?: string; status: 'sent' | 'rejected' | 'failed' | 'skipped'; httpStatus?: number; response?: string; idempotencyKey?: string };
+
+/** POST JSON to the webhook with an Idempotency-Key; one retry with the same key. Keeps the Flow's reply so it can be shown. */
+export async function postWebhook(url: string | undefined, key: string, payload: object): Promise<Omit<Delivery, 'kind' | 'orderId'>> {
+  if (!url) return { status: 'skipped', response: 'No webhook configured (dry run).' };
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key },
+        body: JSON.stringify(payload),
+      });
+      if (res.status < 500) return { status: res.ok ? 'sent' : 'rejected', httpStatus: res.status, response: (await res.text().catch(() => '')).slice(0, 500), idempotencyKey: key };
+    } catch {
+      /* retry once with the same key */
+    }
+  }
+  return { status: 'failed', response: 'Webhook unreachable after retry.', idempotencyKey: key };
+}
+
+function reportFraudTool(cfg: QaConfig, runId: string, onReport?: (r: FraudReport) => void, onDelivery?: (d: Delivery) => void) {
   return createTool({
     id: 'report_fraud',
     description:
@@ -145,23 +165,11 @@ function reportFraudTool(cfg: QaConfig, runId: string, onReport?: (r: FraudRepor
     }),
     execute: async (input: any) => {
       onReport?.(input as FraudReport);
-      if (!cfg.webhookUrl) return { status: 'skipped', reason: 'No webhook configured (dry run).' };
       // Same order + same policy = same key, so a re-run does not create a second alert.
       const key = createHash('sha256').update(`${input.orderId}:${POLICY_VERSION}`).digest('hex');
-      const body = JSON.stringify({ ...input, policyVersion: POLICY_VERSION, runId, detectedAt: new Date().toISOString() });
-      for (let attempt = 1; attempt <= 2; attempt++) {
-        try {
-          const res = await fetch(cfg.webhookUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key },
-            body,
-          });
-          if (res.status < 500) return { status: res.ok ? 'sent' : 'rejected', httpStatus: res.status };
-        } catch {
-          /* retry once with the same key */
-        }
-      }
-      return { status: 'failed', reason: 'Webhook unreachable after retry.' };
+      const r = await postWebhook(cfg.webhookUrl, key, { type: 'fraud-alert', ...input, policyVersion: POLICY_VERSION, runId, detectedAt: new Date().toISOString() });
+      onDelivery?.({ kind: 'alert', orderId: input.orderId, ...r });
+      return { status: r.status, httpStatus: r.httpStatus };
     },
   });
 }
@@ -196,13 +204,14 @@ export async function createFraudAgent(
   cfg: QaConfig = loadConfig(),
   extra: Record<string, unknown> = {},
   onReport?: (r: FraudReport) => void,
+  onDelivery?: (d: Delivery) => void,
 ) {
   const runId = randomUUID();
   const mcp = cfg.mcpUrl ? new MCPClient({ id: 'fraud-apis', servers: { apis: mcpServerDef(cfg) } }) : undefined;
   const apiToolset = mcp ? await mcp.listTools() : apiTools(cfg);
   // Mastra logs MCP connection errors and carries on with zero tools: fail loudly instead of running a blind agent.
   if (mcp && Object.keys(apiToolset).length === 0) throw new Error(`No tools came back from the MCP server ${cfg.mcpUrl}`);
-  const tools = { ...apiToolset, report_fraud: reportFraudTool(cfg, runId, onReport) };
+  const tools = { ...apiToolset, report_fraud: reportFraudTool(cfg, runId, onReport, onDelivery) };
   const agent = new Agent({
     id: 'fraud-agent',
     name: 'Fraud Agent',
