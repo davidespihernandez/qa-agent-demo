@@ -338,3 +338,8 @@ ast agent logs --name fraud-agent ; ast agent network --name fraud-agent
 - [ ] Astro secrets updated, redeployed, `/diag` shows Fabric reachable
 - [ ] (optional) `fraud-agent` service + route, Postman collection works through Fabric
 - [ ] Astro agent deployed, Custom app = Public, `/diag` shows Fabric reachable (section 10)
+
+
+## Verified 2026-10-16: Astro reaches production Fabric
+
+With production values in the Astro vault (`ast secrets import --overwrite`, then `ast blueprint push`, then `ast agent redeploy --latest --var KEY=@ ...`), `GET <public url>/diag` shows the Fabric MCP route answering `initialize` with 200 in about 150 ms and the LLM route 401 without a key (reachable). The beta data plane was unreachable from Astro; production is fine. Until `mcp-http-bridge` is available, the MCP route lists 0 tools, so arm B cannot run yet.
