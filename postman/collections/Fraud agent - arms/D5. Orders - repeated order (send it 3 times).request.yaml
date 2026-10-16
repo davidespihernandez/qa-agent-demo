@@ -1,0 +1,15 @@
+$kind: http-request
+description: "Send this three times: 3 identical orders from the same customer get flagged."
+url: "{{ordersUrl}}/orders"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "customerId": "usr-003",
+      "total": 42,
+      "currency": "USD"
+    }
+order: 500

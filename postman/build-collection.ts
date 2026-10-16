@@ -49,16 +49,15 @@ mkdirSync(join(dir, '.resources'), { recursive: true });
 const q = (s: string) => JSON.stringify(s); // JSON strings are valid YAML scalars
 const block = (lines: string[], pad: string) => lines.map((l) => pad + l).join('\n');
 
-function request(order: number, name: string, method: string, path: string, desc: string, body?: object, script?: string[]) {
+function request(order: number, name: string, method: string, path: string, desc: string, body?: object, script?: string[], base = '{{baseUrl}}') {
   const y = [
     '$kind: http-request',
     `description: ${q(desc)}`,
-    `url: ${q('{{baseUrl}}' + path)}`,
+    `url: ${q(base + path)}`,
     `method: ${method}`,
     'headers:',
     '  Content-Type: application/json',
-    '  x-demo-key: "{{demoKey}}"',
-    '  fg-api-key: "{{fabricKey}}"',
+    ...(base === '{{baseUrl}}' ? ['  x-demo-key: "{{demoKey}}"', '  fg-api-key: "{{fabricKey}}"'] : []),
   ];
   if (body) y.push('body:', '  type: json', '  content: |-', block(JSON.stringify(body, null, 2).split('\n'), '    '));
   if (script) y.push('scripts:', '  - type: afterResponse', '    code: |-', block(script, '      '), '    language: text/javascript');
@@ -75,11 +74,19 @@ writeFileSync(
     '  (or use the Collection Runner), then open "Compare arms" and its Visualize tab. Dry run by default: the webhook is not called. baseUrl points at the Fabric route /agent (needs fabricKey); for a local server use http://localhost:8787 and leave fabricKey empty.',
     'variables:',
     '  baseUrl: https://david-esp-s-fabric-team.dp.fabricgateway.ai/agent',
+    '  ordersUrl: https://18-157-170-15.nip.io',
     '  fabricKey: ""',
     '  demoKey: ""',
   ].join('\n') + '\n',
 );
 
+const O = '{{ordersUrl}}';
+const order = (customerId: string, total: number) => ({ customerId, total, currency: 'USD' });
+request(100, 'D1. Orders - list what the agent will see', 'GET', '/orders', 'The live Orders API (the fake API on AWS). Shows the data the agent reviews.', undefined, undefined, O);
+request(200, 'D2. Orders - new normal order', 'POST', '/orders', 'A routine order: should NOT be flagged.', order('usr-002', 64.9), undefined, O);
+request(300, 'D3. Orders - new high-value order', 'POST', '/orders', 'Over $10,000: the agent should flag it (policy: high value).', order('usr-001', 15250), undefined, O);
+request(400, 'D4. Orders - new order from an unknown customer', 'POST', '/orders', 'Customer is not in the Users API: the agent should flag it.', order('usr-unknown-' + 'x9', 80), undefined, O);
+request(500, 'D5. Orders - repeated order (send it 3 times)', 'POST', '/orders', 'Send this three times: 3 identical orders from the same customer get flagged.', order('usr-003', 42), undefined, O);
 request(1000, '0. What does each arm change', 'GET', '/arms', 'Plain-English description of every arm and whether it is configured on this server.');
 arms.forEach(([arm, name, desc], i) => request(2000 + i * 1000, name, 'POST', '/review', desc, { arm, live: false }, test(arm)));
 request(7000, '5. Compare arms', 'GET', '/arms', 'Open the Visualize tab: a table built from the runs above.', undefined, compareTest);

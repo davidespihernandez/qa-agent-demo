@@ -1,0 +1,15 @@
+$kind: http-request
+description: "A routine order: should NOT be flagged."
+url: "{{ordersUrl}}/orders"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "customerId": "usr-002",
+      "total": 64.9,
+      "currency": "USD"
+    }
+order: 200

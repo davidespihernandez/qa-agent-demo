@@ -1,0 +1,7 @@
+$kind: http-request
+description: "The live Orders API (the fake API on AWS). Shows the data the agent reviews."
+url: "{{ordersUrl}}/orders"
+method: GET
+headers:
+  Content-Type: application/json
+order: 100

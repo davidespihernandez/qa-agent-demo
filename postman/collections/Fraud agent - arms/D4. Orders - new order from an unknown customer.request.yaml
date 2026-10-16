@@ -1,0 +1,15 @@
+$kind: http-request
+description: "Customer is not in the Users API: the agent should flag it."
+url: "{{ordersUrl}}/orders"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "customerId": "usr-unknown-x9",
+      "total": 80,
+      "currency": "USD"
+    }
+order: 400
