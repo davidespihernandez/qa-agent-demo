@@ -90,12 +90,11 @@ scope kind **service**, scope name `anthropic`, match conditions empty. 🟡
 
 ---
 
-## 3. HTTP service: the Orders / Users / Payments APIs 🟡
+## 3. HTTP service: the Orders / Users / Payments APIs ✅
 
 The three business APIs are one merged OpenAPI file with 21 operations.
 
-Where: **Services → Import an OpenAPI spec** (a 3-step wizard; in beta it is a global action, reachable from the banner
-inside the *mcp-http-bridge* plugin form or from the Services page).
+Where: **Services → Add resource**, service type **HTTP**, then the **Import an OpenAPI spec** button under the description (a 3-step wizard; leave Name/Target URL empty).
 
 | Step | Field | Value |
 |---|---|---|
@@ -116,7 +115,9 @@ No credential is needed: the Orders API is public.
 
 ---
 
-## 4. MCP route A: all tools (arm B) 🟡
+## 4. MCP route A: all tools (arm B) ❌ blocked
+
+> **Blocked (2026-10-16):** the `mcp-http-bridge` plugin is not available in the production tenant yet. Bhargav (Fabric) is looking into it. Steps 4-6 depend on it.
 
 ### 4a. Route
 Where: **Routes → Create route**.
