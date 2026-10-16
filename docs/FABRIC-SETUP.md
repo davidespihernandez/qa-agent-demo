@@ -206,7 +206,7 @@ both failed on beta (the plugin never called them).
 
 ---
 
-## 7. (Optional) Expose the deployed agent through Fabric 🟡
+## 7. (Optional) Expose the deployed agent through Fabric ✅
 
 So Postman calls Fabric with only the gateway key, and Fabric adds the agent's own key.
 
@@ -343,3 +343,7 @@ ast agent logs --name fraud-agent ; ast agent network --name fraud-agent
 ## Verified 2026-10-16: Astro reaches production Fabric
 
 With production values in the Astro vault (`ast secrets import --overwrite`, then `ast blueprint push`, then `ast agent redeploy --latest --var KEY=@ ...`), `GET <public url>/diag` shows the Fabric MCP route answering `initialize` with 200 in about 150 ms and the LLM route 401 without a key (reachable). The beta data plane was unreachable from Astro; production is fine. Until `mcp-http-bridge` is available, the MCP route lists 0 tools, so arm B cannot run yet.
+
+## Verified 2026-10-16: agent exposed through Fabric
+
+Service `fraud-agent-astro` (HTTP, target = the agent's `agents.public.astropods.ai` URL, upstream auth type **API key header**, header name `x-demo-key`, applies to Org/tenant). The service form only takes the header NAME; the value is a separate upstream credential under **Credentials**. Route `fraud-agent`: protocol HTTP, path match **Prefix** `/agent`, path the service receives **Remove the matched prefix** (the agent serves `/health`, `/review` at its root), gateway auth Gateway key. Result: `GET /agent/health` and `/agent/arms` return 200 with only `fg-api-key`, 401 without it, and `/agent/diag` works without sending `x-demo-key` (Fabric injects it).
