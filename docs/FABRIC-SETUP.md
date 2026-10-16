@@ -347,3 +347,7 @@ With production values in the Astro vault (`ast secrets import --overwrite`, the
 ## Verified 2026-10-16: agent exposed through Fabric
 
 Service `fraud-agent-astro` (HTTP, target = the agent's `agents.public.astropods.ai` URL, upstream auth type **API key header**, header name `x-demo-key`, applies to Org/tenant). The service form only takes the header NAME; the value is a separate upstream credential under **Credentials**. Route `fraud-agent`: protocol HTTP, path match **Prefix** `/agent`, path the service receives **Remove the matched prefix** (the agent serves `/health`, `/review` at its root), gateway auth Gateway key. Result: `GET /agent/health` and `/agent/arms` return 200 with only `fg-api-key`, 401 without it, and `/agent/diag` works without sending `x-demo-key` (Fabric injects it).
+
+## Verified 2026-10-16: Orders/Users/Payments REST through Fabric
+
+Route `demo-apis-rest`: protocol HTTP, path match **Prefix** `/api`, path the service receives **Remove the matched prefix**, service `demo-apis-orders-users-payments`, gateway auth **Gateway key**. `GET /api/orders` returns the orders with `fg-api-key`, 401 without. The Postman collection's `ordersUrl` points here (with `fabricKey`); the oracle and arm A keep using the direct URL on purpose.

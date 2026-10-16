@@ -67,7 +67,7 @@ function request(order: number, name: string, method: string, path: string, desc
     `method: ${method}`,
     'headers:',
     '  Content-Type: application/json',
-    ...(base === '{{baseUrl}}' ? ['  x-demo-key: "{{demoKey}}"', '  fg-api-key: "{{fabricKey}}"'] : []),
+    ...(base === '{{baseUrl}}' ? ['  x-demo-key: "{{demoKey}}"', '  fg-api-key: "{{fabricKey}}"'] : ['  fg-api-key: "{{fabricKey}}"']),
   ];
   if (body) y.push('body:', '  type: json', '  content: |-', block(JSON.stringify(body, null, 2).split('\n'), '    '));
   if (script) y.push('scripts:', '  - type: afterResponse', '    code: |-', block(script, '      '), '    language: text/javascript');
@@ -84,7 +84,7 @@ writeFileSync(
     '  (or use the Collection Runner), then open "Compare arms" and its Visualize tab. Dry run by default: the webhook is not called. baseUrl points at the Fabric route /agent (needs fabricKey); for a local server use http://localhost:8787 and leave fabricKey empty.',
     'variables:',
     '  baseUrl: https://david-esp-s-fabric-team.dp.fabricgateway.ai/agent',
-    '  ordersUrl: https://18-157-170-15.nip.io',
+    '  ordersUrl: https://david-esp-s-fabric-team.dp.fabricgateway.ai/api',
     '  fabricKey: ""',
     '  demoKey: ""',
   ].join('\n') + '\n',
@@ -101,13 +101,13 @@ const resetScript = [
   '    pm.test("Only ord-001 and ord-002 remain", () => pm.expect(out.filter(x => x.code !== 200 && x.code !== 204).length).to.eql(0));',
   '    return pm.visualizer.set(`<h3>Orders reset</h3><p>Kept ${keep.join(", ")}. Deleted ${out.length}: ${out.map(x => x.id + " (" + x.code + ")").join(", ") || "nothing to delete"}.</p>`);',
   '  }',
-  '  pm.sendRequest({ url: base + "/orders/" + extra[i].id, method: "DELETE" }, (err, res) => { out.push({ id: extra[i].id, code: err ? 0 : res.code }); next(i + 1); });',
+  '  pm.sendRequest({ url: base + "/orders/" + extra[i].id, method: "DELETE", header: { "fg-api-key": pm.variables.replaceIn("{{fabricKey}}") } }, (err, res) => { out.push({ id: extra[i].id, code: err ? 0 : res.code }); next(i + 1); });',
   '};',
   'next(0);',
 ];
 const O = '{{ordersUrl}}';
 const order = (customerId: string, total: number) => ({ customerId, total, currency: 'USD' });
-request(100, 'D1. Orders - list what the agent will see', 'GET', '/orders', 'The live Orders API (the fake API on AWS). Shows the data the agent reviews.', undefined, undefined, O);
+request(100, 'D1. Orders - list what the agent will see', 'GET', '/orders', 'The live Orders API, reached through the Fabric route /api (gateway key required; the fake API runs on AWS). Shows the data the agent reviews.', undefined, undefined, O);
 request(150, 'D0. Orders - RESET to ord-001 and ord-002', 'GET', '/orders', 'DESTRUCTIVE on the demo API: deletes every order except ord-001 and ord-002 (it lists them, then deletes the rest). Use it to start a demo from a clean state.', undefined, resetScript, O);
 request(200, 'D2. Orders - new normal order', 'POST', '/orders', 'A routine order: should NOT be flagged.', order('usr-002', 64.9), undefined, O);
 request(300, 'D3. Orders - new high-value order', 'POST', '/orders', 'Over $10,000: the agent should flag it (policy: high value).', order('usr-001', 15250), undefined, O);

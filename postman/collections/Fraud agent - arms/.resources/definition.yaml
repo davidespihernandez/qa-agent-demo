@@ -4,6 +4,6 @@ description: >-
   (or use the Collection Runner), then open "Compare arms" and its Visualize tab. Dry run by default: the webhook is not called. baseUrl points at the Fabric route /agent (needs fabricKey); for a local server use http://localhost:8787 and leave fabricKey empty.
 variables:
   baseUrl: https://david-esp-s-fabric-team.dp.fabricgateway.ai/agent
-  ordersUrl: https://18-157-170-15.nip.io
+  ordersUrl: https://david-esp-s-fabric-team.dp.fabricgateway.ai/api
   fabricKey: ""
   demoKey: ""

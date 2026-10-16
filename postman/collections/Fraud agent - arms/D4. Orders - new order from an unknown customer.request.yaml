@@ -4,6 +4,7 @@ url: "{{ordersUrl}}/orders"
 method: POST
 headers:
   Content-Type: application/json
+  fg-api-key: "{{fabricKey}}"
 body:
   type: json
   content: |-
