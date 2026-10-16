@@ -4,10 +4,12 @@ Everything the demo needs in a Fabric tenant, with exact names and values. Follo
 (the beta tenant was built this way). Names matter: the repo's `.env`, the Postman collection and the Astro inputs
 refer to the URLs these names produce.
 
-> **Beta vs production.** This guide was written from the beta UI. Production labels and menus can differ
-> (the production docs call the sidebar items *LLMs*, *MCP servers*, *Services*, and show the key header as
-> `X-Gateway-Key`). If a field is not where this says, look for the same word elsewhere. Where production behaves
-> differently, the repo is configurable (see step 9).
+> **Beta vs production.** This guide started from the beta UI (tenant on `*.dp.fabricgateway-beta.ai`) and is being
+> checked against production (`app.fabricgateway.ai`, sidebar: *Getting started, LLMs, MCP servers, Services, Plugins,
+> Members, Credentials*). Each step says what was **verified in production** and what is still **beta-only**. Production
+> docs show the key header as `X-Gateway-Key`; the repo is configurable (see step 9).
+>
+> Status legend: ✅ verified in production · 🟡 written from beta, not yet verified in production · ❌ known not to work (yet).
 
 Legend: **bold** = a value you type or select. `code` = exact text.
 
@@ -28,56 +30,63 @@ Legend: **bold** = a value you type or select. `code` = exact text.
 
 ---
 
-## 1. Gateway key (the only secret the agent holds)
+## 1. Gateway key (the only secret the agent holds) ✅
 
-Where: **Gateway keys** (or *Administration → Gateway keys / API keys*).
+Where (production): sidebar **Credentials → Create credential**. (Beta: Administration → Credentials.)
 
 | Field | Value |
 |---|---|
-| Name | `demo-agent-key` |
-| Scope / routes | all routes (or at least the ones created below) |
+| Credential type | **Gateway credential** (the other type, *Service credential*, is for upstream secrets such as the Anthropic key) |
+| Owner | **Myself** |
+| Gateway key → Name | `demo-agent-key` |
 
-Copy the key once. It goes in `.env` as `FABRIC_GATEWAY_KEY` and in the Astro vault.
+Click **Create credential**. The key is minted by the server and **shown once**: copy it straight into `.env`
+(`FABRIC_GATEWAY_KEY=`), never into chat or git.
+
+Owner matters: a route only accepts keys of the owner selected on the route (wizard field *Credential owner*:
+Org / tenant, a user, or a user group). One key owned by you worked as "the demo key" on beta. If a route answers 401
+with a valid key, create another gateway credential with the owner the route expects.
 
 ---
 
-## 2. LLM connection: Anthropic
+## 2. LLM connection: Anthropic ✅ (route + key reuse test pending)
 
-Where: **LLMs** (beta: **Services → Create connection**, type **LLM**). Pick **Anthropic** from the provider catalog
-(*Use integration*), which pre-fills the target URL and auth type.
+Where (production): **Getting started → Anthropic → Use integration** opens a **4-step wizard**
+(*Create service → Set up credentials → Model filter → Route & gateway*). The service is pre-filled from the catalog
+(Anthropic Messages API; auth is the `x-api-key` header plus a static `anthropic-version` header).
 
-| Field | Value |
-|---|---|
-| Provider / service name | `anthropic` |
-| Target URL | `https://api.anthropic.com` (pre-filled) |
-| Upstream auth requirement | the one the template pre-selects; **Applies to: Org/tenant** |
-| Credential | paste your **Anthropic API key** (stored in Fabric's vault, write-only) |
+| Wizard step | Field | Value |
+|---|---|---|
+| 1 Create service | Service name | `anthropic` (default) |
+| 2 Set up credentials | Anthropic API key | paste your key (stored in Fabric's vault, write-only) |
+| 3 Model filter | | leave the default (all models) |
+| 4 Route & gateway | Route setup | **Create new route** |
+| 4 | Route name | `anthropic-route` |
+| 4 | API compatibility class | **Anthropic Messages API** |
+| 4 | **Route base path** | **`/anthropic`** (it is EMPTY by default; without it the endpoints are mounted at the root) |
+| 4 | Endpoints to expose | keep all three ticked: `POST /v1/messages`, `POST /v1/messages/count_tokens`, `GET /v1/models` |
+| 4 | Access mode | **Open** (this is a separate "needs a grant" feature, not authentication) |
+| 4 | Create a gateway credential | **Unchecked** to reuse the key from step 1 (check it only if you want a new org-level key; it is shown once). Keep **Auth mode = Gateway key** |
+| 4 | Credential owner | **Org / tenant** if the wizard creates the key; if you reuse your own key, pick yourself |
 
-**Route** (LLMs → Routes, or the route created for you):
+Resulting URLs: `https://<HOST>/anthropic/v1/messages` etc., which is `LLM_BASE_URL=https://<HOST>/anthropic`.
 
-| Field | Value |
-|---|---|
-| Name | `anthropic-route` |
-| Protocol | **LLM** |
-| Paths | the catalog paths, `/anthropic/v1/messages`, `/anthropic/v1/messages/count_tokens`, `/anthropic/v1/models` |
-| Service | `anthropic` |
-| Gateway auth | **Gateway key** |
-
-Test (replace the key header if production uses `X-Gateway-Key`):
+Test (production docs use `X-Gateway-Key`; beta used `Authorization: Bearer`):
 ```bash
 curl -s https://<HOST>/anthropic/v1/messages \
-  -H "Authorization: Bearer $FABRIC_GATEWAY_KEY" \
+  -H "X-Gateway-Key: $FABRIC_GATEWAY_KEY" \
   -H "anthropic-version: 2023-06-01" -H "content-type: application/json" \
   -d '{"model":"claude-sonnet-4-5","max_tokens":20,"messages":[{"role":"user","content":"say hi"}]}'
 ```
-Expected: a normal Anthropic response, and a trace in **Observability → Traces** with tokens and an estimated cost.
+Expected: a normal Anthropic response and a trace under **Observability → Traces** with tokens and an estimated cost.
+401 means the route does not accept that key (see the owner note in step 1).
 
-Optional plugin (Plugin instances → New): **Token Counter**: name `anthropic-token-counter`,
-plugin `token-counter`, scope kind **service**, scope name `anthropic`, match conditions empty.
+Optional plugin (Plugins → New instance): **Token Counter**: name `anthropic-token-counter`, plugin `token-counter`,
+scope kind **service**, scope name `anthropic`, match conditions empty. 🟡
 
 ---
 
-## 3. HTTP service: the Orders / Users / Payments APIs
+## 3. HTTP service: the Orders / Users / Payments APIs 🟡
 
 The three business APIs are one merged OpenAPI file with 21 operations.
 
@@ -103,7 +112,7 @@ No credential is needed: the Orders API is public.
 
 ---
 
-## 4. MCP route A: all tools (arm B)
+## 4. MCP route A: all tools (arm B) 🟡
 
 ### 4a. Route
 Where: **Routes → Create route**.
@@ -137,7 +146,7 @@ bun --env-file=.env scripts/mcp-probe.ts https://<HOST>/mcp/demo-apis
 
 ---
 
-## 5. MCP route B-ro: read-only tools (arm B-ro)
+## 5. MCP route B-ro: read-only tools (arm B-ro) 🟡
 
 Same as step 4, but only the 8 safe operations.
 
@@ -154,7 +163,7 @@ Verify: `bun --env-file=.env scripts/mcp-probe.ts https://<HOST>/mcp/demo-apis-r
 
 ---
 
-## 6. MCP route C: Tool Search (arm C)
+## 6. MCP route C: Tool Search (arm C) 🟡
 
 Keep this on its **own route**, never on route A: Tool Search replaces the tool list with 3 meta-tools and would break arm B.
 
@@ -184,12 +193,15 @@ Verify (expect 3 meta-tools and a non-empty result list):
 ```bash
 bun --env-file=.env scripts/mcp-probe.ts https://<HOST>/mcp/demo-apis-search "list all orders"
 ```
-Beta status when this was written: the embedder answered, but the catalog came back empty (`"results":[]`) and
-`get_tool listOrders` said "tool not found". Check with the Fabric team whether the bridge's tools are indexed.
+❌ **Beta status:** the in-house embedder answered (no more `embedder unavailable`), but the catalog came back empty
+(`"results":[]`) and `get_tool listOrders` said "tool not found", so the bridge's tools were not indexed. Ask the Fabric team
+whether Tool Search indexes tools generated by the `mcp-http-bridge` plugin on the same route, or only upstream MCP servers.
+Until that works, arm C cannot be measured. The OpenAI embedder (no credits) and a Gemini route on the same tenant
+both failed on beta (the plugin never called them).
 
 ---
 
-## 7. (Optional) Expose the deployed agent through Fabric
+## 7. (Optional) Expose the deployed agent through Fabric 🟡
 
 So Postman calls Fabric with only the gateway key, and Fabric adds the agent's own key.
 
@@ -215,7 +227,7 @@ Note: reviews take 20-60 s, so use the async API (`POST /agent/review` returns a
 
 ---
 
-## 8. Optional governance extras (for the talk track)
+## 8. Optional governance extras (for the talk track) 🟡
 
 Add in Plugin instances; not needed for the token comparison.
 
@@ -263,6 +275,37 @@ Add `MCP_URL_READONLY` / `MCP_URL_SEARCH` (and `FABRIC_KEY_HEADER` if needed) in
 
 ---
 
+## 10. Astro side (agent deployment), what we learned
+
+Not Fabric, but it decides whether the Fabric arms can run from the deployed agent. Account: `ast whoami` must show
+`davidespi` (personal), never the `postman` org.
+
+```bash
+cd agent
+ast blueprint push fraud-agent                                  # private blueprint, new build id each push
+ast secrets import --file <a file with only the keys you need>  # then delete that file
+ast blueprint deploy fraud-agent --adapter web \
+  --var ANTHROPIC_API_KEY=@ --var FABRIC_GATEWAY_KEY=@ --var LLM_BASE_URL=@ --var MCP_URL=@ \
+  --var FRAUD_WEBHOOK_URL=@ --var DEMO_API_KEY=@ --wait
+ast agent redeploy --name fraud-agent --build <build id> --wait  # after every push
+ast agent logs --name fraud-agent ; ast agent network --name fraud-agent
+```
+
+- **Public HTTP API:** the agent's HTTP surface is the *frontend* interface. In the Astro dashboard open the agent →
+  **Configure → Access → Custom app → Public**, then **redeploy**. Only then does the host change to
+  `<agent>.agents.public.astropods.ai` and answer without the Astro login (OIDC). The chat (Web chat) stays "Invited only".
+  Protect `POST /review` with `x-demo-key` (`DEMO_API_KEY`).
+- **15 s edge timeout:** Astro's public edge answers 504 after about 15 s, so `POST /review` is asynchronous (202 + run id,
+  then `GET /runs/{id}`). Use the same shape through Fabric.
+- **Pin dependencies:** the image must use `bun.lock` (it does); a fresh install pulled a newer MCP client.
+- **Network check:** `GET <agent url>/diag` (header `x-demo-key`) times each hop from inside Astro: the Orders API,
+  Fabric MCP, Fabric LLM and Anthropic. On the beta tenant Fabric timed out (the host resolves to a private `100.72.x.x` address,
+  VPN only), so only arm A could run on Astro. **On production this must show Fabric answering**; if not, the Fabric
+  arms can only run from a laptop on the network that can reach Fabric.
+- **Startup safety:** if the gateway is unreachable at boot, the chat agent falls back to the direct arm instead of crashing.
+
+---
+
 ## Gotchas learned the hard way
 
 - **Spec import creates open routes.** Delete the REST routes it makes (step 3), keep the service.
@@ -272,10 +315,14 @@ Add `MCP_URL_READONLY` / `MCP_URL_SEARCH` (and `FABRIC_KEY_HEADER` if needed) in
 - **Gateway auth: Gateway key** on every route. "No gateway auth" makes the route public.
 - **Header names differ**: LLM route `Authorization: Bearer` (beta) vs `X-Gateway-Key` (production docs); HTTP/MCP routes `fg-api-key` (beta) vs `X-Gateway-Key`. The anthropic route also needs the client to send `anthropic-version`.
 - **A private data-plane host cannot be reached from Astro.** Check step 0 first.
+- **Anthropic wizard: set the Route base path to `/anthropic`.** It is empty by default.
+- **Gateway key owner:** a route accepts only keys of its selected owner (Org / tenant, user, group).
+- **Newer MCP clients send a version-negotiation probe** (3 s timeout) that failed against the beta MCP route from Astro; locally it works. Keep `bun.lock` pinned.
 
 ## Final checklist
 
-- [ ] Gateway key `demo-agent-key` created and saved
+- [ ] Production host is public (step 0) and reachable without VPN
+- [ ] Gateway key `demo-agent-key` created and saved in `.env`
 - [ ] `anthropic` service + `anthropic-route`, test call returns 200 and shows a trace
 - [ ] Service `demo-apis-orders-users-payments` with spec imported, 9 open REST routes deleted
 - [ ] Route + bridge `demo-apis-mcp` (21 tools)
@@ -284,3 +331,4 @@ Add `MCP_URL_READONLY` / `MCP_URL_SEARCH` (and `FABRIC_KEY_HEADER` if needed) in
 - [ ] `.env` updated, `mcp-probe` and `harness/run.ts` pass for A, B, B-ro
 - [ ] Astro secrets updated, redeployed, `/diag` shows Fabric reachable
 - [ ] (optional) `fraud-agent` service + route, Postman collection works through Fabric
+- [ ] Astro agent deployed, Custom app = Public, `/diag` shows Fabric reachable (section 10)
