@@ -7,7 +7,7 @@ refer to the URLs these names produce.
 > **Beta vs production.** This guide started from the beta UI (tenant on `*.dp.fabricgateway-beta.ai`) and is being
 > checked against production (`app.fabricgateway.ai`, sidebar: *Getting started, LLMs, MCP servers, Services, Plugins,
 > Members, Credentials*). Each step says what was **verified in production** and what is still **beta-only**. Production
-> docs show the key header as `X-Gateway-Key`; the repo is configurable (see step 9).
+> docs show the key header as `X-Gateway-Key`; the repo is configurable (see step 9); in practice `fg-api-key` worked.
 >
 > Status legend: ✅ verified in production · 🟡 written from beta, not yet verified in production · ❌ known not to work (yet).
 
@@ -49,7 +49,7 @@ with a valid key, create another gateway credential with the owner the route exp
 
 ---
 
-## 2. LLM connection: Anthropic ✅ (route + key reuse test pending)
+## 2. LLM connection: Anthropic ✅
 
 Where (production): **Getting started → Anthropic → Use integration** opens a **4-step wizard**
 (*Create service → Set up credentials → Model filter → Route & gateway*). The service is pre-filled from the catalog
@@ -71,15 +71,19 @@ Where (production): **Getting started → Anthropic → Use integration** opens 
 
 Resulting URLs: `https://<HOST>/anthropic/v1/messages` etc., which is `LLM_BASE_URL=https://<HOST>/anthropic`.
 
-Test (production docs use `X-Gateway-Key`; beta used `Authorization: Bearer`):
+**The key header is `fg-api-key` on production too, for the LLM route as well** (verified). The production docs say
+`X-Gateway-Key` and beta's LLM route used `Authorization: Bearer`; on the production tenant both of those, and `x-api-key`,
+answer **401**, and only `fg-api-key` gets a 200. Test:
 ```bash
 curl -s https://<HOST>/anthropic/v1/messages \
-  -H "X-Gateway-Key: $FABRIC_GATEWAY_KEY" \
+  -H "fg-api-key: $FABRIC_GATEWAY_KEY" \
   -H "anthropic-version: 2023-06-01" -H "content-type: application/json" \
   -d '{"model":"claude-sonnet-4-5","max_tokens":20,"messages":[{"role":"user","content":"say hi"}]}'
 ```
 Expected: a normal Anthropic response and a trace under **Observability → Traces** with tokens and an estimated cost.
-401 means the route does not accept that key (see the owner note in step 1).
+A 401 usually means the wrong header name (try `fg-api-key`, `X-Gateway-Key`, `Authorization: Bearer`, one at a time) or a key
+whose owner the route does not accept (see step 1). Reusing the step 1 key (owner *Myself*, wizard checkbox
+"Create a gateway credential" unchecked) worked on production.
 
 Optional plugin (Plugins → New instance): **Token Counter**: name `anthropic-token-counter`, plugin `token-counter`,
 scope kind **service**, scope name `anthropic`, match conditions empty. 🟡
@@ -249,9 +253,10 @@ MCP_URL=https://<HOST>/mcp/demo-apis
 MCP_URL_READONLY=https://<HOST>/mcp/demo-apis-ro
 MCP_URL_SEARCH=https://<HOST>/mcp/demo-apis-search
 FABRIC_GATEWAY_KEY=<key from step 1>
-# Production docs show the header as X-Gateway-Key. If the beta defaults do not work, set:
-FABRIC_KEY_HEADER=X-Gateway-Key        # HTTP and MCP routes (default fg-api-key)
-FABRIC_LLM_KEY_HEADER=X-Gateway-Key    # LLM route (default is Authorization: Bearer)
+# Header that carries the gateway key. Production (verified) accepts fg-api-key on every route, LLM included.
+# Beta used Authorization: Bearer on the LLM route (leave FABRIC_LLM_KEY_HEADER empty for that).
+FABRIC_KEY_HEADER=fg-api-key           # HTTP and MCP routes
+FABRIC_LLM_KEY_HEADER=fg-api-key       # LLM route
 ```
 
 Then, in this order:
@@ -313,7 +318,7 @@ ast agent logs --name fraud-agent ; ast agent network --name fraud-agent
 - **Service credentials are tied to one auth type.** Changing the auth type creates a new requirement that needs a new credential.
 - **Tool Search lives on its own route.** On the shared route it hides all 21 tools.
 - **Gateway auth: Gateway key** on every route. "No gateway auth" makes the route public.
-- **Header names differ**: LLM route `Authorization: Bearer` (beta) vs `X-Gateway-Key` (production docs); HTTP/MCP routes `fg-api-key` (beta) vs `X-Gateway-Key`. The anthropic route also needs the client to send `anthropic-version`.
+- **Header names differ**: beta LLM route `Authorization: Bearer`; production accepts `fg-api-key` everywhere (the production docs' `X-Gateway-Key` returned 401). The Anthropic route also needs the client to send `anthropic-version`.
 - **A private data-plane host cannot be reached from Astro.** Check step 0 first.
 - **Anthropic wizard: set the Route base path to `/anthropic`.** It is empty by default.
 - **Gateway key owner:** a route accepts only keys of its selected owner (Org / tenant, user, group).
@@ -321,9 +326,9 @@ ast agent logs --name fraud-agent ; ast agent network --name fraud-agent
 
 ## Final checklist
 
-- [ ] Production host is public (step 0) and reachable without VPN
+- [x] Production host is public (step 0): resolves to Cloudflare addresses, reachable without VPN
 - [ ] Gateway key `demo-agent-key` created and saved in `.env`
-- [ ] `anthropic` service + `anthropic-route`, test call returns 200 and shows a trace
+- [x] `anthropic` service + `anthropic-route`, test call returns 200 (header `fg-api-key`); check the trace in the UI
 - [ ] Service `demo-apis-orders-users-payments` with spec imported, 9 open REST routes deleted
 - [ ] Route + bridge `demo-apis-mcp` (21 tools)
 - [ ] Route + bridge `demo-apis-mcp-ro` (8 tools)
