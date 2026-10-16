@@ -5,6 +5,7 @@ method: GET
 headers:
   Content-Type: application/json
   x-demo-key: "{{demoKey}}"
+  fg-api-key: "{{fabricKey}}"
 scripts:
   - type: afterResponse
     code: |-

@@ -24,7 +24,7 @@ const test = (arm: string) => [
   'const start = pm.response.json();',
   'const poll = (left) => pm.sendRequest({',
   '  url: pm.variables.replaceIn("{{baseUrl}}") + start.statusUrl, method: "GET",',
-  '  header: { "x-demo-key": pm.variables.replaceIn("{{demoKey}}") },',
+  '  header: { "x-demo-key": pm.variables.replaceIn("{{demoKey}}"), "fg-api-key": pm.variables.replaceIn("{{fabricKey}}") },',
   '}, (err, res) => {',
   '  const r = err ? { status: "error" } : res.json();',
   '  if (r.status === "running" && left > 0) return setTimeout(() => poll(left - 1), 3000);',
@@ -58,6 +58,7 @@ function request(order: number, name: string, method: string, path: string, desc
     'headers:',
     '  Content-Type: application/json',
     '  x-demo-key: "{{demoKey}}"',
+    '  fg-api-key: "{{fabricKey}}"',
   ];
   if (body) y.push('body:', '  type: json', '  content: |-', block(JSON.stringify(body, null, 2).split('\n'), '    '));
   if (script) y.push('scripts:', '  - type: afterResponse', '    code: |-', block(script, '      '), '    language: text/javascript');
@@ -71,9 +72,10 @@ writeFileSync(
     '$kind: collection',
     'description: >-',
     '  Runs the same fraud-review agent through each path; only the arm changes. Run the arm requests in order',
-    '  (or use the Collection Runner), then open "Compare arms" and its Visualize tab. Dry run by default: the webhook is not called.',
+    '  (or use the Collection Runner), then open "Compare arms" and its Visualize tab. Dry run by default: the webhook is not called. baseUrl points at the Fabric route /agent (needs fabricKey); for a local server use http://localhost:8787 and leave fabricKey empty.',
     'variables:',
-    '  baseUrl: http://localhost:8787',
+    '  baseUrl: https://david-esp-s-fabric-team.dp.fabricgateway.ai/agent',
+    '  fabricKey: ""',
     '  demoKey: ""',
   ].join('\n') + '\n',
 );

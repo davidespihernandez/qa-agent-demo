@@ -5,6 +5,7 @@ method: POST
 headers:
   Content-Type: application/json
   x-demo-key: "{{demoKey}}"
+  fg-api-key: "{{fabricKey}}"
 body:
   type: json
   content: |-
@@ -29,7 +30,7 @@ scripts:
       const start = pm.response.json();
       const poll = (left) => pm.sendRequest({
         url: pm.variables.replaceIn("{{baseUrl}}") + start.statusUrl, method: "GET",
-        header: { "x-demo-key": pm.variables.replaceIn("{{demoKey}}") },
+        header: { "x-demo-key": pm.variables.replaceIn("{{demoKey}}"), "fg-api-key": pm.variables.replaceIn("{{fabricKey}}") },
       }, (err, res) => {
         const r = err ? { status: "error" } : res.json();
         if (r.status === "running" && left > 0) return setTimeout(() => poll(left - 1), 3000);

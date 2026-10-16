@@ -5,6 +5,7 @@ method: POST
 headers:
   Content-Type: application/json
   x-demo-key: "{{demoKey}}"
+  fg-api-key: "{{fabricKey}}"
 body:
   type: json
   content: |-

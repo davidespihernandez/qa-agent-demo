@@ -5,4 +5,5 @@ method: GET
 headers:
   Content-Type: application/json
   x-demo-key: "{{demoKey}}"
+  fg-api-key: "{{fabricKey}}"
 order: 1000
