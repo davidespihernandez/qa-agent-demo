@@ -1,0 +1,8 @@
+$kind: http-request
+description: The live Orders API, reached through the Fabric route /api (gateway key required; the fake API runs on AWS). Shows the data the agent reviews.
+url: "{{ordersUrl}}/orders"
+method: GET
+headers:
+  Content-Type: application/json
+  fg-api-key: "{{fabricKey}}"
+order: 100

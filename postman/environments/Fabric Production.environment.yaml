@@ -1,0 +1,22 @@
+name: Fabric Production
+values:
+  - key: baseUrl
+    value: 'https://david-esp-s-fabric-team.dp.fabricgateway.ai/agent'
+  - key: ordersUrl
+    value: 'https://david-esp-s-fabric-team.dp.fabricgateway.ai/api'
+  - key: fabricKey
+    secret: true
+    source:
+      provider: postman
+      postman:
+        type: cloud
+        secretId: ca1c8371-45e1-425f-ac6f-19e2aabcc442
+        vaultId: f7a04d2b-2465-43fb-aeae-23703eb26df0
+  - key: demoKey
+    secret: true
+    source:
+      provider: postman
+      postman:
+        type: cloud
+        secretId: 8bd16bae-1347-45d7-b602-d06cc2bf90af
+        vaultId: f7a04d2b-2465-43fb-aeae-23703eb26df0
