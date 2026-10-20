@@ -1,7 +1,7 @@
 /**
  * Run the fraud review with the agent and score it against the reference oracle.
  *
- *   bun harness/run.ts --arm A|B|B-ro|C --runs 3 [--max-steps 40] [--live]
+ *   bun harness/run.ts --arm A|B|B-ro|C|D --runs 3 [--max-steps 40] [--live]
  *
  * The arm decides the path (see ARMS in agent/agent/review.ts): A direct, B through Fabric,
  * B-ro through Fabric with the read-only tool set, C through Fabric with Tool Search. The MCP route

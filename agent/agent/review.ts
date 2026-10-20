@@ -10,7 +10,7 @@ import { createHash } from 'node:crypto';
 import { createFraudAgent, loadConfig, postWebhook, POLICY_VERSION, type Delivery, type FraudReport, type QaConfig } from './fraud-agent';
 import { expectedFlags } from './oracle';
 
-export type Arm = 'A' | 'B' | 'B-ro' | 'C';
+export type Arm = 'A' | 'B' | 'B-ro' | 'C' | 'D';
 
 export const ARMS: Record<Arm, { title: string; llm: string; tools: string; env?: string }> = {
   A: {
@@ -36,6 +36,12 @@ export const ARMS: Record<Arm, { title: string; llm: string; tools: string; env?
     tools: 'Fabric MCP route with the Tool Search plugin: the model searches for tools instead of receiving all of them',
     env: 'MCP_URL_SEARCH',
   },
+  D: {
+    title: 'Fabric + adaptive model router',
+    llm: 'Fabric LLM route with the adaptive-model-router plugin: Jev picks the model for each request',
+    tools: 'API calls made in-process by the agent, as in arm A (isolates the router)',
+    env: 'LLM_BASE_URL_ADAPTIVE',
+  },
 };
 
 export const isArm = (a: string): a is Arm => a in ARMS;
@@ -44,6 +50,11 @@ export const isArm = (a: string): a is Arm => a in ARMS;
 export function armConfig(arm: Arm, env: Record<string, string | undefined> = process.env): QaConfig {
   const cfg = loadConfig(env);
   if (arm === 'A') return { ...cfg, llmBaseUrl: undefined, gatewayKey: undefined, mcpUrl: undefined, mcpToken: undefined };
+  if (arm === 'D') {
+    const llmBaseUrl = env.LLM_BASE_URL_ADAPTIVE;
+    if (!llmBaseUrl || !cfg.gatewayKey) throw new Error('Arm D needs LLM_BASE_URL_ADAPTIVE (the Fabric adaptive route) and FABRIC_GATEWAY_KEY.');
+    return { ...cfg, llmBaseUrl, mcpUrl: undefined, mcpToken: undefined };
+  }
   const mcpUrl = env[ARMS[arm].env!] || undefined;
   if (!mcpUrl) throw new Error(`Arm ${arm} needs ${ARMS[arm].env} (the Fabric MCP route URL) in the environment.`);
   if (!cfg.llmBaseUrl || !cfg.gatewayKey) throw new Error(`Arm ${arm} needs LLM_BASE_URL and FABRIC_GATEWAY_KEY.`);
@@ -54,6 +65,35 @@ export function armConfig(arm: Arm, env: Record<string, string | undefined> = pr
 export const PRICE = { in: 3, out: 15 };
 export const estimateCost = (u: { inputTokens?: number; outputTokens?: number } | null | undefined) =>
   u ? ((u.inputTokens ?? 0) * PRICE.in + (u.outputTokens ?? 0) * PRICE.out) / 1e6 : null;
+
+/**
+ * List prices in USD per million tokens, by model id prefix. Only models whose price is known are here:
+ * an adaptive run that lands on any other model reports tokens per model and no total cost, never a guess.
+ */
+const MODEL_PRICES: [string, { in: number; out: number }][] = [
+  ['claude-sonnet-4-5', { in: 3, out: 15 }],
+  ['claude-haiku-4-5', { in: 1, out: 5 }],
+  ['claude-opus-4-5', { in: 5, out: 25 }],
+];
+
+/** What each step really ran on (the router may change the model per request) and what that cost. */
+export function perModelUsage(steps: any[] = []) {
+  const byModel: Record<string, { steps: number; inputTokens: number; outputTokens: number; costUsd: number | null }> = {};
+  for (const st of steps) {
+    const m = String(st.response?.modelId ?? st.response?.model ?? 'unknown');
+    const u = st.usage ?? {};
+    const e = (byModel[m] ??= { steps: 0, inputTokens: 0, outputTokens: 0, costUsd: 0 });
+    e.steps += 1;
+    e.inputTokens += u.inputTokens ?? u.promptTokens ?? 0;
+    e.outputTokens += u.outputTokens ?? u.completionTokens ?? 0;
+  }
+  for (const [m, e] of Object.entries(byModel)) {
+    const price = MODEL_PRICES.find(([p]) => m.startsWith(p))?.[1];
+    e.costUsd = price ? (e.inputTokens * price.in + e.outputTokens * price.out) / 1e6 : null;
+  }
+  const costs = Object.values(byModel).map((e) => e.costUsd);
+  return { byModel, totalCostUsd: costs.length && costs.every((c) => c !== null) ? (costs as number[]).reduce((a, b) => a + b, 0) : null };
+}
 
 const PROMPT =
   'Review all orders for fraud according to the policy. Report each suspicious order with report_fraud, then finish with the SUMMARY line.';
@@ -93,7 +133,13 @@ export async function runReview(arm: string, cfg: QaConfig, opts: ReviewOptions 
       missed,
       extra,
       usage,
-      estimatedCostUsd: estimateCost(usage),
+      // Arm D can use several models in one run: price each step by the model that served it.
+      ...(arm === 'D'
+        ? (() => {
+            const pm = perModelUsage(res.steps);
+            return { modelsUsed: pm.byModel, estimatedCostUsd: pm.totalCostUsd };
+          })()
+        : { estimatedCostUsd: estimateCost(usage) }),
       steps: res.steps?.length ?? null,
       toolCalls: res.toolCalls?.length ?? null,
       summary: String(res.text ?? '').split('\n').filter((l) => l.startsWith('SUMMARY')).pop() ?? null,
@@ -115,7 +161,7 @@ export async function runReview(arm: string, cfg: QaConfig, opts: ReviewOptions 
       type: 'fraud-review-summary',
       runId,
       arm,
-      model: cfg.model,
+      model: arm === 'D' ? 'adaptive (chosen per step by the router)' : cfg.model,
       policyVersion: POLICY_VERSION,
       status: record.verdict === 'error' ? 'error' : 'completed',
       error: record.verdict === 'error' ? record.reason : undefined,
