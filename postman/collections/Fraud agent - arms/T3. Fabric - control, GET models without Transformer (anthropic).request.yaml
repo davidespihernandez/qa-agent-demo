@@ -1,0 +1,8 @@
+$kind: http-request
+description: "Control for T1. Same GET on the plain /anthropic route (no Transformer) returns 200 with the model list."
+url: "https://david-esp-s-fabric-team.dp.fabricgateway.ai/anthropic/v1/models"
+method: GET
+headers:
+  anthropic-version: "2023-06-01"
+  fg-api-key: "{{fabricKey}}"
+order: 9200

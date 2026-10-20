@@ -1,52 +1,58 @@
-# qa-agent-demo
+# fraud-agent demo (Astro + Fabric Gateway)
 
-A UI-testing agent that reads **plain-English test specs**, drives a real browser, and reports pass/fail with evidence. Built to demo two Postman products end to end:
+A fraud-investigation agent that reviews orders and reports suspicious ones to a Postman Flow. Built to demo:
 
 - **Astro** (Astropods): build, run, deploy and observe the agent.
-- **Fabric Gateway**: put every LLM and tool call behind one governed, observable endpoint, and measure token savings.
+- **Fabric Gateway**: one governed entry point for the agent's LLM and API calls (simple authentication, model control, observability).
 
-> Status: work in progress. See [docs/PLAN.md](docs/PLAN.md) for the plan and [DEMO.md](DEMO.md) for the talk track.
+> Status: the demo covers build (Astro), gateway (Fabric) and observability. Token-saving plugins (adaptive router, Tool Search) are measured as "next steps". See [DEMO.md](DEMO.md) for the talk track and [docs/FABRIC-SETUP.md](docs/FABRIC-SETUP.md) for the Fabric configuration.
 
 ## The idea
 
 ```
-tester (chat)
-   │
-[ QA agent  ]  ── traces ──▶ Astro (turns, evals, outcomes)
-   │ LLM calls        │ tool calls (MCP)
-   ▼                  ▼
- Fabric Gateway (gateway key · Tool Search · Token Counter · audit)
-   │                  │
- Anthropic       Playwright MCP ──▶ Chrome ──▶ app under test
+Postman / chat ──▶ [ fraud agent on Astro ] ── traces ──▶ Astro
+                        │ LLM calls        │ API calls
+                        ▼                  ▼
+                 Fabric Gateway (one gateway key, model rules, per-call traces)
+                        │                  │
+                    Anthropic         Orders / Users / Payments APIs
+                        │
+                 report_fraud ──▶ Postman Flow webhook
 ```
 
-Astro tells you whether the agent did its job. Fabric tells you what it cost, what it touched, and can stop it from touching what it shouldn't.
+The policy is plain English (`agent/agent/fraud-policy.md`): flag orders over $10,000, unknown customers, and 3 or more identical orders.
 
-## Token comparison (the value of the gateway)
+## Arms (same agent, only the path changes)
 
-The same tests run three ways, several times each:
-
-| Arm | Path | Shows |
+| Arm | Path | Notes |
 |---|---|---|
-| A. Baseline | agent → LLM and tools directly | the "before" |
-| B. Gateway passthrough | agent → Fabric | observability with ~no token change |
-| C. Gateway + Tool Search | agent → Fabric, Tool Search on | the token savings |
+| A | Direct to Anthropic and the APIs | baseline, the agent holds every key |
+| F | Fabric `/anthropic` and `/api` | one gateway key, tools stay in the agent |
+| F-eco | Fabric `/anthropic-select` | service only allows Haiku 4.5 and Sonnet 4.5; agent asks for Haiku |
+| D | Fabric `/anthropic-adaptive` | adaptive router (decision service Jev); picks Haiku for trivial prompts, Opus 5.5 for our review task |
+| B, B-ro, C | Fabric MCP route (all / read-only / Tool Search) | blocked until `mcp-http-bridge` exists in production |
 
-Ground truth is the LLM `usage` fields captured by the harness, cross-checked against Fabric's Token Counter and Astro's traces. Pass rate is reported next to tokens, so savings can't hide failures.
+Every run is checked by an oracle: the agent passes only if the set of flagged orders equals the set computed from the data.
 
 ## Layout
 
 | Path | What |
 |---|---|
-| `tests/` | plain-English test specs (what a customer would write) |
-| `agent/` | the agent (Mastra) and its evaluation instructions |
-| `agent-runtime/` | browser host: Playwright MCP + the app under test (AWS) |
-| `harness/` | runs the three arms and prints the comparison table |
-| `docs/` | plan and notes |
+| `agent/` | the agent (Mastra), its HTTP API (`POST /review`) and `astropods.yml` |
+| `harness/` | runs one or more arms: `bun harness/run.ts --arm F-eco --runs 3` |
+| `postman/` | collection with every arm, data-reset requests and the Flow webhook |
+| `scripts/` | seed data, tool dump, MCP probe |
+| `docs/` | Fabric setup guide, webhook contract, plan |
+| `results/` | saved harness runs |
 
-## Configuration
+## Run it
 
-Copy `.env.example` to `.env`. Never commit `.env`.
+```bash
+cp .env.example .env     # fill in keys; never commit .env
+cd agent && bun install
+ast dev                   # local playground and POST /review
+bun harness/run.ts --arm A --runs 3      # from the repo root
+```
 
 ## License
 

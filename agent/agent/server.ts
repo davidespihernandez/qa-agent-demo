@@ -5,7 +5,7 @@
  *
  *   GET  /health
  *   GET  /arms                           what each arm changes
- *   POST /review {"arm":"B","live":false,"maxSteps":40}   -> 202 {runId, statusUrl}; a review takes 20-60 s,
+ *   POST /review {"arm":"F","model":"cheap","live":false,"maxSteps":40}   -> 202 {runId, statusUrl}; a review takes 20-60 s,
  *                                                             longer than gateways and proxies wait, so it runs in the background
  *   GET  /runs/{runId}                                       -> {status:"running"} or the finished result
  *   (add "wait": true to POST /review to hold the connection and get the result directly, for local use)
@@ -45,6 +45,9 @@ Bun.serve({
       let cfg;
       try {
         cfg = armConfig(arm);
+        // Optional per-request model: "cheap" / "expensive" or a full model id. Not for D (the router decides).
+        const MODEL_ALIASES: Record<string, string> = { cheap: 'anthropic/claude-haiku-4-5-20251001', expensive: 'anthropic/claude-sonnet-4-5' };
+        if (body.model && arm !== 'D') cfg = { ...cfg, model: MODEL_ALIASES[String(body.model)] ?? String(body.model) };
       } catch (e: any) {
         return json({ error: e.message }, 400);
       }

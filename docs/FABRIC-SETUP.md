@@ -240,7 +240,7 @@ Add in Plugin instances; not needed for the token comparison.
 |---|---|---|
 | `llm-rate-limit` | route `anthropic-route` | cap tokens per minute per key |
 | `agent-scope-gate` | route `demo-apis-mcp` | allow only the read-only tools, block writes at the gateway |
-| `adaptive-model-router` | route `anthropic-route` | arm D (needs a Jev decision service and key; not set up yet) |
+| `adaptive-model-router` | route `anthropic-route` | arm D. Set up on route `anthropic-adaptive`: service `anthropic`, decision service `jev` (a Fabric service whose upstream is the Jev endpoint, API key in the vault), Jev model `jev-1.13.0`, max input 32000 chars; system messages, tool descriptions and session stickiness off. Customers need their own Jev key (availability to customers unconfirmed) |
 
 ---
 

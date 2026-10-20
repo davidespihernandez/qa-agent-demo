@@ -10,13 +10,25 @@ import { createHash } from 'node:crypto';
 import { createFraudAgent, loadConfig, postWebhook, POLICY_VERSION, type Delivery, type FraudReport, type QaConfig } from './fraud-agent';
 import { expectedFlags } from './oracle';
 
-export type Arm = 'A' | 'B' | 'B-ro' | 'C' | 'D';
+export type Arm = 'A' | 'F' | 'F-eco' | 'B' | 'B-ro' | 'C' | 'D';
 
 export const ARMS: Record<Arm, { title: string; llm: string; tools: string; env?: string }> = {
   A: {
     title: 'Direct',
     llm: 'Anthropic, with the real API key inside the agent',
     tools: 'API calls made in-process by the agent (21 tools, writes blocked in code)',
+  },
+  F: {
+    title: 'Through Fabric, tools in the agent',
+    llm: 'Fabric LLM route (the agent only holds a gateway key)',
+    tools: 'API calls made in-process by the agent, through the Fabric /api route (Fabric adds the API key)',
+    env: 'FABRIC_API_URL',
+  },
+  'F-eco': {
+    title: 'Fabric economy route',
+    llm: 'Fabric economy LLM route: a smaller model, chosen by the route',
+    tools: 'Same as F: in-process tools, APIs through the Fabric /api route',
+    env: 'LLM_BASE_URL_ECONOMY',
   },
   B: {
     title: 'Through Fabric',
@@ -50,6 +62,22 @@ export const isArm = (a: string): a is Arm => a in ARMS;
 export function armConfig(arm: Arm, env: Record<string, string | undefined> = process.env): QaConfig {
   const cfg = loadConfig(env);
   if (arm === 'A') return { ...cfg, llmBaseUrl: undefined, gatewayKey: undefined, mcpUrl: undefined, mcpToken: undefined };
+  if (arm === 'F' || arm === 'F-eco') {
+    const fabricApi = env.FABRIC_API_URL;
+    const llmBaseUrl = arm === 'F' ? cfg.llmBaseUrl : env.LLM_BASE_URL_ECONOMY;
+    if (!fabricApi || !llmBaseUrl || !cfg.gatewayKey) throw new Error(`Arm ${arm} needs FABRIC_API_URL, ${arm === 'F' ? 'LLM_BASE_URL' : 'LLM_BASE_URL_ECONOMY'} and FABRIC_GATEWAY_KEY.`);
+    return {
+      ...cfg,
+      llmBaseUrl,
+      // The economy route asks for a Haiku-class model by name; the route can also pin it.
+      model: arm === 'F-eco' ? ECONOMY_MODEL : cfg.model,
+      apiBaseUrl: fabricApi,
+      apiHeaders: { [cfg.keyHeader ?? 'fg-api-key']: cfg.gatewayKey },
+      truthBaseUrl: cfg.apiBaseUrl ?? 'https://18-157-170-15.nip.io',
+      mcpUrl: undefined,
+      mcpToken: undefined,
+    };
+  }
   if (arm === 'D') {
     const llmBaseUrl = env.LLM_BASE_URL_ADAPTIVE;
     if (!llmBaseUrl || !cfg.gatewayKey) throw new Error('Arm D needs LLM_BASE_URL_ADAPTIVE (the Fabric adaptive route) and FABRIC_GATEWAY_KEY.');
@@ -63,8 +91,12 @@ export function armConfig(arm: Arm, env: Record<string, string | undefined> = pr
 
 /** Sonnet 4.5 list price in USD per million tokens, the same rate Fabric uses for "Estimated cost". */
 export const PRICE = { in: 3, out: 15 };
-export const estimateCost = (u: { inputTokens?: number; outputTokens?: number } | null | undefined) =>
-  u ? ((u.inputTokens ?? 0) * PRICE.in + (u.outputTokens ?? 0) * PRICE.out) / 1e6 : null;
+export const ECONOMY_MODEL = 'anthropic/claude-haiku-4-5-20251001';
+/** Cost of a run on one model; null when we have no verified price for it. */
+export const estimateCost = (u: { inputTokens?: number; outputTokens?: number } | null | undefined, model = 'claude-sonnet-4-5') => {
+  const p = MODEL_PRICES.find(([prefix]) => model.replace(/^anthropic\//, '').startsWith(prefix))?.[1];
+  return u && p ? ((u.inputTokens ?? 0) * p.in + (u.outputTokens ?? 0) * p.out) / 1e6 : null;
+};
 
 /**
  * List prices in USD per million tokens, by model id prefix. Only models whose price is known are here:
@@ -111,7 +143,7 @@ async function groundTruth(apiBaseUrl?: string) {
 export type ReviewOptions = { maxSteps?: number; live?: boolean };
 
 export async function runReview(arm: string, cfg: QaConfig, opts: ReviewOptions = {}) {
-  const truth = await groundTruth(cfg.apiBaseUrl);
+  const truth = await groundTruth(cfg.truthBaseUrl ?? cfg.apiBaseUrl);
   // The webhook is only called on a live run, so benchmark runs never spam the Flow.
   const runCfg = { ...cfg, webhookUrl: opts.live ? cfg.webhookUrl : undefined };
   const started = Date.now();
@@ -139,7 +171,7 @@ export async function runReview(arm: string, cfg: QaConfig, opts: ReviewOptions 
             const pm = perModelUsage(res.steps);
             return { modelsUsed: pm.byModel, estimatedCostUsd: pm.totalCostUsd };
           })()
-        : { estimatedCostUsd: estimateCost(usage) }),
+        : { estimatedCostUsd: estimateCost(usage, cfg.model) }),
       steps: res.steps?.length ?? null,
       toolCalls: res.toolCalls?.length ?? null,
       summary: String(res.text ?? '').split('\n').filter((l) => l.startsWith('SUMMARY')).pop() ?? null,

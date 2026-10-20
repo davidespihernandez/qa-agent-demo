@@ -53,6 +53,10 @@ export type QaConfig = {
   mcpUrl?: string;
   mcpToken?: string;
   apiBaseUrl?: string;
+  /** Extra headers for the API calls (a gateway key when the APIs are reached through Fabric). */
+  apiHeaders?: Record<string, string>;
+  /** Where ground truth is read when apiBaseUrl is a gateway URL that needs a key. */
+  truthBaseUrl?: string;
   webhookUrl?: string;
 };
 
@@ -116,7 +120,7 @@ function apiTools(cfg: QaConfig) {
         let url = op.path.replace(/\{(\w+)\}/g, (_, k) => encodeURIComponent(String(input[k])));
         const query = op.params.filter((p) => p.in === 'query' && input[p.name] !== undefined);
         if (query.length) url += '?' + new URLSearchParams(query.map((p) => [p.name, String(input[p.name])])).toString();
-        const res = await fetch(base + url);
+        const res = await fetch(base + url, { headers: cfg.apiHeaders });
         // Return the raw body text, like the MCP bridge does, so result formatting (and tokens) match.
         const text = await res.text();
         if (text.length > 40000) return 'Response too large, truncated. Use a more specific lookup.\n' + text.slice(0, 2000);
