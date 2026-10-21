@@ -83,7 +83,7 @@ Slide: *One run, seen from both sides* (screenshots of the Astro trace and the F
 4. **Flow side** (or any system behind the webhook): `fraud-alert` per flagged order, one `fraud-review-summary`.
    Run again and show the Idempotency-Key stops duplicate alerts.
 
-> TODO: add an Astro trace screenshot (run through `ast dev` or the deployed agent; the harness bypasses Astro).
+> TODO: screenshot of the Astro trace for a `POST /review` run (Traces & Evals, 7d). Each review is traced as `invoke_agent Fraud Agent` with latency and cost (a Haiku run showed $0.027, a Sonnet chat run $0.084); CLI: `ast agent trace --id <id>`. Usage & Cost fills in after a day or two.
 
 ## Act 4: what comes next, token savings (5 to 10 min)
 
