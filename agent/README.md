@@ -28,4 +28,13 @@ Dockerfile
 
 Set in `astropods.yml` inputs (secrets in the Astro vault): `LLM_BASE_URL`, `FABRIC_GATEWAY_KEY`, `FABRIC_API_URL`, `FRAUD_WEBHOOK_URL`, `DEMO_API_KEY`. With none of them set the agent runs direct (arm A).
 
-Deploy: `ast blueprint push`.
+Deploy:
+
+```bash
+ast blueprint push -y        # build and register the image (prints the tag)
+# values live in the account vault (ast secrets create NAME --value ...); the redeploy must name them:
+V=(); for n in LLM_BASE_URL LLM_BASE_URL_ECONOMY LLM_BASE_URL_ADAPTIVE FABRIC_API_URL FABRIC_KEY_HEADER FABRIC_LLM_KEY_HEADER FABRIC_GATEWAY_KEY DEMO_API_KEY FRAUD_WEBHOOK_URL; do V+=(--var "$n=@"); done
+ast agent redeploy --id <deployment id from 'ast agent list'> --latest "${V[@]}"
+```
+
+A redeploy without `--var` did not pass the new vault values to the container (arms F and F-eco answered "needs FABRIC_API_URL...").
