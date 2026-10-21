@@ -57,11 +57,33 @@ Slide: *One run, seen from both sides* (screenshots of the Astro trace and the F
 
 1. Run a live review (`live: true`) with the rows created in Postman (`D3`, `D4`, `D5`).
 2. **Astro side:** the trace of the run: steps, tool calls, model calls.
-3. **Fabric side:** the same run per route and key: calls, tokens, cost, status, latency.
-4. **Flow side:** `fraud-alert` per flagged order, one `fraud-review-summary`.
+3. **Fabric side** (console, Analytics, window 1H). Two levels:
+   - *Dashboard* (tabs Overview / MCP / LLM, filter by protocol): total requests, error rate, P95 latency, active
+     consumers, traffic per minute by protocol (HTTP vs LLM), errors (4xx/5xx), P95 over time, top routes and top
+     consumers. Our two runs (arm F and F-eco, 4 LLM calls each plus the API reads) showed 18 requests: `/api/*` 10,
+     `anthropic-select` 4, `anthropic-route` 4, all from one consumer (the identity behind the gateway key).
+   - *Trace of one call* (open a call from the list): spans `POST /anthropic/v1/messages` > `chat claude-sonnet-4-5`
+     > `POST api.anthropic.com`, with `fabric.service.name`, `gen_ai.request.model` and `gen_ai.response.model`,
+     input and output tokens (first call: 3,894 in, 60 out, 2.15 s), finish reason (`tool_use`), **estimated cost**
+     ($0.013 for that call), and the full request (system prompt, user message, the 22 tools, tool choice) and response.
+   - Where the tokens go (arm F run, 4 LLM calls, 20,493 in / 1,511 out): call 1 is only the system prompt plus the
+     22 tool schemas (3,894 in, $0.013). Later calls resend the whole history, so call 3 (5,335 in, 1,057 out, 10.7 s,
+     $0.032) carries the orders JSON and the four user lookups, and ends with 5 `report_fraud` calls. The estimate
+     matches list price (Sonnet 4.5, $3 in / $15 out per million). This is the picture behind the token-saving next steps:
+     Tool Search would shrink call 1, a cheaper model shrinks the price of all four.
+   - *Traces list* (Traces, windows 24H to 90D): one row per call with protocol (LLM or HTTP), operation, route, service,
+     user, status and duration, and filters for each. Our two runs side by side: arm F made 4 calls to
+     `claude-sonnet-4-5` (2.15 s, 6.28 s, 10.71 s, 1.69 s, about 21 s total), arm F-eco made 4 calls to
+     `claude-haiku-4-5` through `anthropic-select` (1.02 s, 2.06 s, 7.80 s, 0.83 s, about 12 s), and each run's API
+     reads show as `GET /api/*`. The yellow 404s are the lookup of the unknown customer `usr-ghost`, which is the
+     expected signal for the "unknown customer" rule. The 401 (no user) from the day before is a call without a key.
+     The 24H error rate (19.8%) includes our earlier tests, so use the 1H window for a clean demo.
+   - Point out: the same view for `/anthropic-select` shows Haiku, so the model difference is visible per call.
+     Note for customers: traces include the prompt, so decide who can see them.
+4. **Flow side** (or any system behind the webhook): `fraud-alert` per flagged order, one `fraud-review-summary`.
    Run again and show the Idempotency-Key stops duplicate alerts.
 
-> TODO: capture the real Fabric screens (what the dashboard and traces show per call) before the first customer run.
+> TODO: add an Astro trace screenshot (run through `ast dev` or the deployed agent; the harness bypasses Astro).
 
 ## Act 4: what comes next, token savings (5 to 10 min)
 
