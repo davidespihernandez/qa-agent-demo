@@ -9,7 +9,7 @@ headers:
 scripts:
   - type: afterResponse
     code: |-
-      const rows = ["A","B","B-ro","C"].map(a => { try { return JSON.parse(pm.collectionVariables.get("res_" + a)); } catch (e) { return null; } }).filter(Boolean);
+      const rows = ["A","F","F-eco","F-cheap","B","B-ro","C"].map(a => { try { return JSON.parse(pm.collectionVariables.get("res_" + a)); } catch (e) { return null; } }).filter(Boolean);
       const base = rows.find(x => x.arm === "A");
       const d = x => base && base.inTok ? ((x.inTok / base.inTok - 1) * 100).toFixed(1) + "%" : "";
       const tr = rows.map(x => `<tr><td>${x.arm}</td><td>${x.verdict}</td><td>${x.tools}</td><td>${x.inTok}</td><td>${d(x)}</td><td>${x.outTok}</td><td>$${x.cost.toFixed(3)}</td><td>${x.sec}s</td></tr>`).join("");

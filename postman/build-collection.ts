@@ -1,19 +1,23 @@
 /** Generates the Postman v3 (YAML) collection in postman/collections/ (run: bun postman/build-collection.ts). */
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const arms = [
-  ['A', '1. A - Direct to Anthropic', 'The agent calls Anthropic and the APIs itself. Nothing in between: the baseline.'],
-  ['B', '2. B - Through Fabric', 'Same agent, same task. LLM and API tools now go through Fabric: gateway key, traces, governance. Expect ~the same tokens.'],
-  ['B-ro', '3. B-ro - Fabric, read-only tools', 'Fabric exposes only the 8 GET operations to this agent. Fewer tool definitions per call, and it cannot write even if it wanted to.'],
-  ['C', '4. C - Fabric + Tool Search', 'Fabric hides the catalog behind a search tool; the model fetches only the tools it needs.'],
+// [key, arm sent to the agent, request name, description, extra body fields]
+const arms: [string, string, string, string, object?][] = [
+  ['A', 'A', '1. A - Direct to Anthropic', 'The agent calls Anthropic and the APIs itself, with the real Anthropic key inside the agent. Nothing in between: the baseline (Sonnet 4.5).'],
+  ['F', 'F', '2. F - Through Fabric', 'Same agent, same task. The LLM and the APIs go through Fabric: the agent only holds a gateway key (fg-api-key), and Fabric adds the real credentials. Expect the same tokens and cost as A, plus traces, analytics and control in Fabric.'],
+  ['F-eco', 'F-eco', '3. F-eco - Fabric economy route', 'Same as F, but the agent calls the economy route, where a Transformer plugin rewrites the model to Haiku 4.5. No agent change. About 67% cheaper in our runs; Haiku passed 7 of 8.'],
+  ['F-cheap', 'F', '4. F + model "cheap" - choose the model per request', 'Same as F, but the request asks for the "cheap" model (Haiku 4.5). The agent switches model per request, with no redeploy. Use "expensive" for Sonnet 4.5 or a full model id.', { model: 'cheap' }],
+  ['B', 'B', '5. B - Fabric MCP route (optional)', 'Tools come from a Fabric MCP route instead of in-process calls: the bridge exposes all 21 operations. Needs MCP_URL on the agent.'],
+  ['B-ro', 'B-ro', '6. B-ro - MCP, read-only tools (optional)', 'Fabric exposes only the 8 GET operations to this agent. Fewer tool definitions per call, and it cannot write even if it wanted to. Needs MCP_URL_READONLY.'],
+  ['C', 'C', '7. C - MCP + Tool Search (optional)', 'Fabric hides the catalog behind a search tool; the model fetches only the tools it needs. Needs MCP_URL_SEARCH.'],
 ];
 
-const test = (arm: string) => [
+const test = (arm: string, label = arm) => [
   '// POST /review answers 202 at once; poll /runs/{id} until the review finishes (a review takes 20-60 s).',
   'const show = (r) => {',
   `  pm.test('Agent flagged exactly the right orders', () => pm.expect(r.verdict).to.eql('pass'));`,
-  `  pm.collectionVariables.set('res_${arm}', JSON.stringify({ arm: r.arm, verdict: r.verdict, tools: r.toolCount, steps: r.steps,`,
+  `  pm.collectionVariables.set('res_${arm}', JSON.stringify({ arm: '${label}', verdict: r.verdict, tools: r.toolCount, steps: r.steps,`,
   '    inTok: r.usage && r.usage.inputTokens, outTok: r.usage && r.usage.outputTokens, cost: r.estimatedCostUsd, sec: Math.round(r.ms / 1000) }));',
   '  let t = `<style>body{font-family:sans-serif;font-size:14px}td,th{padding:4px 10px;text-align:right}th:first-child,td:first-child{text-align:left}</style>',
   '  <h3>Arm ${r.arm}: ${r.title}</h3><p>${r.llm}<br>${r.tools}</p>',
@@ -45,7 +49,7 @@ const test = (arm: string) => [
 ];
 
 const compareTest = [
-  'const rows = ["A","B","B-ro","C"].map(a => { try { return JSON.parse(pm.collectionVariables.get("res_" + a)); } catch (e) { return null; } }).filter(Boolean);',
+  'const rows = ["A","F","F-eco","F-cheap","B","B-ro","C"].map(a => { try { return JSON.parse(pm.collectionVariables.get("res_" + a)); } catch (e) { return null; } }).filter(Boolean);',
   'const base = rows.find(x => x.arm === "A");',
   'const d = x => base && base.inTok ? ((x.inTok / base.inTok - 1) * 100).toFixed(1) + "%" : "";',
   'const tr = rows.map(x => `<tr><td>${x.arm}</td><td>${x.verdict}</td><td>${x.tools}</td><td>${x.inTok}</td><td>${d(x)}</td><td>${x.outTok}</td><td>$${x.cost.toFixed(3)}</td><td>${x.sec}s</td></tr>`).join("");',
@@ -53,8 +57,9 @@ const compareTest = [
 ];
 
 const dir = join(import.meta.dir, 'collections', 'Fraud agent - arms');
-rmSync(dir, { recursive: true, force: true });
+// Regenerate everything except the hand-written T* (Transformer) and R* (adaptive router) repro requests.
 mkdirSync(join(dir, '.resources'), { recursive: true });
+for (const f of readdirSync(dir)) if (f.endsWith('.request.yaml') && !/^[TR]\d\./.test(f)) rmSync(join(dir, f));
 
 const q = (s: string) => JSON.stringify(s); // JSON strings are valid YAML scalars
 const block = (lines: string[], pad: string) => lines.map((l) => pad + l).join('\n');
@@ -107,14 +112,14 @@ const resetScript = [
 ];
 const O = '{{ordersUrl}}';
 const order = (customerId: string, total: number) => ({ customerId, total, currency: 'USD' });
-request(100, 'D1. Orders - list what the agent will see', 'GET', '/orders', 'The live Orders API, reached through the Fabric route /api (gateway key required; the fake API runs on AWS). Shows the data the agent reviews.', undefined, undefined, O);
-request(150, 'D0. Orders - RESET to ord-001 and ord-002', 'GET', '/orders', 'DESTRUCTIVE on the demo API: deletes every order except ord-001 and ord-002 (it lists them, then deletes the rest). Use it to start a demo from a clean state.', undefined, resetScript, O);
+request(100, 'D0. Orders - list what the agent will see', 'GET', '/orders', 'The live Orders API, reached through the Fabric route /api (gateway key required; the fake API runs on AWS). Shows the data the agent reviews.', undefined, undefined, O);
+request(150, 'D1. Orders - RESET to ord-001 and ord-002', 'GET', '/orders', 'DESTRUCTIVE on the demo API: deletes every order except ord-001 and ord-002 (it lists them, then deletes the rest). Use it to start a demo from a clean state.', undefined, resetScript, O);
 request(200, 'D2. Orders - new normal order', 'POST', '/orders', 'A routine order: should NOT be flagged.', order('usr-002', 64.9), undefined, O);
 request(300, 'D3. Orders - new high-value order', 'POST', '/orders', 'Over $10,000: the agent should flag it (policy: high value).', order('usr-001', 15250), undefined, O);
 request(400, 'D4. Orders - new order from an unknown customer', 'POST', '/orders', 'Customer is not in the Users API: the agent should flag it.', order('usr-unknown-' + 'x9', 80), undefined, O);
 request(500, 'D5. Orders - repeated order (send it 3 times)', 'POST', '/orders', 'Send this three times: 3 identical orders from the same customer get flagged.', order('usr-003', 42), undefined, O);
 request(1000, '0. What does each arm change', 'GET', '/arms', 'Plain-English description of every arm and whether it is configured on this server.');
-arms.forEach(([arm, name, desc], i) => request(2000 + i * 1000, name, 'POST', '/review', desc, { arm, live: false }, test(arm)));
-request(7000, '5. Compare arms', 'GET', '/arms', 'Open the Visualize tab: a table built from the runs above.', undefined, compareTest);
-request(8000, '6. LIVE - fire the Postman webhook', 'POST', '/review', 'Only for the show-and-tell. Sends one alert per fraudulent order to the Flow webhook (Idempotency-Key header).', { arm: 'B', live: true });
+arms.forEach(([key, arm, name, desc, extra], i) => request(2000 + i * 1000, name, 'POST', '/review', desc, { arm, ...extra, live: false }, test(key, key)));
+request(7000, '8. Compare arms', 'GET', '/arms', 'Open the Visualize tab: a table built from the runs above.', undefined, compareTest);
+request(8000, '9. LIVE - fire the Postman webhook', 'POST', '/review', 'Only for the show-and-tell. Sends one alert per fraudulent order to the Flow webhook (Idempotency-Key header).', { arm: 'F', live: true });
 console.log('written', dir);

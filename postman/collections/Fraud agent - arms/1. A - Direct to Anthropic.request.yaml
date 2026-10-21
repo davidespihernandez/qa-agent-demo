@@ -1,5 +1,5 @@
 $kind: http-request
-description: "The agent calls Anthropic and the APIs itself. Nothing in between: the baseline."
+description: "The agent calls Anthropic and the APIs itself, with the real Anthropic key inside the agent. Nothing in between: the baseline (Sonnet 4.5)."
 url: "{{baseUrl}}/review"
 method: POST
 headers:
@@ -19,7 +19,7 @@ scripts:
       // POST /review answers 202 at once; poll /runs/{id} until the review finishes (a review takes 20-60 s).
       const show = (r) => {
         pm.test('Agent flagged exactly the right orders', () => pm.expect(r.verdict).to.eql('pass'));
-        pm.collectionVariables.set('res_A', JSON.stringify({ arm: r.arm, verdict: r.verdict, tools: r.toolCount, steps: r.steps,
+        pm.collectionVariables.set('res_A', JSON.stringify({ arm: 'A', verdict: r.verdict, tools: r.toolCount, steps: r.steps,
           inTok: r.usage && r.usage.inputTokens, outTok: r.usage && r.usage.outputTokens, cost: r.estimatedCostUsd, sec: Math.round(r.ms / 1000) }));
         let t = `<style>body{font-family:sans-serif;font-size:14px}td,th{padding:4px 10px;text-align:right}th:first-child,td:first-child{text-align:left}</style>
         <h3>Arm ${r.arm}: ${r.title}</h3><p>${r.llm}<br>${r.tools}</p>

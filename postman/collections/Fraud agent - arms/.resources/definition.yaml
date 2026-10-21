@@ -1,2 +1,7 @@
 $kind: collection
 description: 'Runs the same fraud-review agent through each path; only the arm changes. Run the arm requests in order (or use the Collection Runner), then open "Compare arms" and its Visualize tab. Dry run by default: the webhook is not called. baseUrl points at the Fabric route /agent (needs fabricKey); for a local server use http://localhost:8787 and leave fabricKey empty.'
+variables:
+  res_A: ""
+  res_F: ""
+  res_F-eco: ""
+  res_F-cheap: ""
