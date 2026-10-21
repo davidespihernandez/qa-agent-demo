@@ -14,20 +14,32 @@ agent:
   inputs:
     - name: LLM_BASE_URL
       datatype: string
-      description: Fabric LLM route, e.g. https://<host>/anthropic (arms B, B-ro, C)
+      description: Fabric LLM route, e.g. https://<host>/anthropic (arm F). Empty = direct to Anthropic (arm A)
+      optional: true
+    - name: LLM_BASE_URL_ECONOMY
+      datatype: string
+      description: Fabric LLM route whose service only allows Haiku 4.5 and Sonnet 4.5, e.g. https://<host>/anthropic-select (arm F-eco)
+      optional: true
+    - name: LLM_BASE_URL_ADAPTIVE
+      datatype: string
+      description: Fabric LLM route with the adaptive model router, e.g. https://<host>/anthropic-adaptive (arm D)
+      optional: true
+    - name: FABRIC_API_URL
+      datatype: string
+      description: Fabric route to the Orders/Users/Payments APIs, e.g. https://<host>/api (arms F, F-eco, D read data through it)
       optional: true
     - name: FABRIC_GATEWAY_KEY
       datatype: string
       secret: true
-      description: Fabric gateway key (Bearer on the LLM route, fg-api-key on MCP routes)
+      description: Fabric gateway key, the only credential the agent holds on the Fabric arms
       optional: true
     - name: FABRIC_KEY_HEADER
       datatype: string
-      description: Header carrying the gateway key on HTTP/MCP routes (default fg-api-key; production uses X-Gateway-Key)
+      description: Header carrying the gateway key on API and MCP routes (default fg-api-key)
       optional: true
     - name: FABRIC_LLM_KEY_HEADER
       datatype: string
-      description: If set, the LLM route takes the gateway key in this header instead of Authorization Bearer
+      description: Header carrying the gateway key on the LLM routes. Set to fg-api-key (default is Authorization Bearer, which our routes reject)
       optional: true
     - name: MCP_URL
       datatype: string
