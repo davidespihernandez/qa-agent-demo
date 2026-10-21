@@ -7,6 +7,7 @@
  */
 
 import { createHash } from 'node:crypto';
+import { runTracingOptions, traceRunAgent } from './telemetry';
 import { createFraudAgent, loadConfig, postWebhook, POLICY_VERSION, type Delivery, type FraudReport, type QaConfig } from './fraud-agent';
 import { expectedFlags } from './oracle';
 
@@ -150,9 +151,13 @@ export async function runReview(arm: string, cfg: QaConfig, opts: ReviewOptions 
   const reports: FraudReport[] = [];
   const alerts: Delivery[] = [];
   const { agent, mcp, toolCount, runId } = await createFraudAgent(runCfg, {}, (r) => reports.push(r), (d) => alerts.push(d));
+  const untrace = traceRunAgent(agent, `review-${runId}`);
   let record: any = { arm, test: 'fraud-review', runId, toolCount, model: cfg.model, live: !!opts.live };
   try {
-    const res: any = await agent.generate(PROMPT, { maxSteps: opts.maxSteps ?? 40 });
+    const res: any = await agent.generate(PROMPT, {
+      maxSteps: opts.maxSteps ?? 40,
+      tracingOptions: runTracingOptions({ arm, model: cfg.model, runId, live: String(!!opts.live) }),
+    });
     const flagged = new Set(reports.map((r) => r.orderId));
     const missed = [...truth.expected.keys()].filter((id) => !flagged.has(id));
     const extra = [...flagged].filter((id) => !truth.expected.has(id));
@@ -184,6 +189,7 @@ export async function runReview(arm: string, cfg: QaConfig, opts: ReviewOptions 
     record = { ...record, verdict: 'error', reason: String(e?.message ?? e).slice(0, 300), ms: Date.now() - started };
   } finally {
     await mcp?.disconnect().catch(() => {});
+    untrace();
   }
   // Every live review ends with ONE summary event to the webhook, fraud or not, so the Flow always hears back.
   let summary: Delivery = { kind: 'summary', status: 'skipped', response: 'Dry run: the webhook is not called.' };

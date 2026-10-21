@@ -1,0 +1,17 @@
+$kind: http-request
+description: "Same route and request shape as R1, but the prompt is our agent task, short and with no tools or data. The response model is claude-opus-5-5. The expected result for cost control would be Haiku or Sonnet: Haiku passes this task in our tests. Tested 2026-10-21."
+url: "https://david-esp-s-fabric-team.dp.fabricgateway.ai/anthropic-adaptive/v1/messages"
+method: POST
+headers:
+  Content-Type: application/json
+  anthropic-version: "2023-06-01"
+  fg-api-key: "{{fabricKey}}"
+body:
+  type: json
+  content: |-
+    {
+      "model": "claude-sonnet-4-5",
+      "max_tokens": 20,
+      "messages": [{ "role": "user", "content": "Review the orders for fraud and report suspicious ones." }]
+    }
+order: 9310

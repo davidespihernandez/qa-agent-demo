@@ -11,11 +11,9 @@
 
 import { createFraudAgent, loadConfig } from './fraud-agent';
 import { armConfig } from './review';
-import { Mastra } from '@mastra/core/mastra';
 import { Memory } from '@mastra/memory';
 import { LibSQLStore } from '@mastra/libsql';
-import { Observability } from '@mastra/observability';
-import { OtelExporter } from '@mastra/otel-exporter';
+import { mastra } from './telemetry';
 import { serve } from '@astropods/adapter-mastra';
 // Also start the HTTP API (POST /review) so the agent can be called from Postman or curl.
 import './server';
@@ -25,37 +23,6 @@ const memory = new Memory({
     id: 'memory',
     url: ':memory:',
   }),
-});
-
-function resolveOtlpTracesEndpoint(): string {
-  const raw = process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://localhost:4318';
-  try {
-    const url = new URL(raw);
-    if (!url.pathname || url.pathname === '/') {
-      url.pathname = '/v1/traces';
-    }
-    return url.toString();
-  } catch {
-    return `${raw.replace(/\/+$/, '')}/v1/traces`;
-  }
-}
-
-const observability = new Observability({
-  configs: {
-    otel: {
-      serviceName: 'fraud-agent',
-      exporters: [
-        new OtelExporter({
-          provider: {
-            custom: {
-              endpoint: resolveOtlpTracesEndpoint(),
-              protocol: 'http/protobuf',
-            },
-          },
-        }),
-      ],
-    },
-  },
 });
 
 // Same agent the benchmark harness runs; only env vars differ between arms.
@@ -84,13 +51,7 @@ try {
 }
 const { agent } = created;
 
-// Instantiate Mastra so it registers agents/observability plugins at startup.
-// `serve(agent)` handles request serving; this constructor call wires runtime integration.
-new Mastra({
-  agents: {
-    'fraud-agent': agent,
-  },
-  observability,
-});
+// Register the chat agent with the traced Mastra instance (see telemetry.ts). `serve(agent)` handles request serving.
+mastra.addAgent(agent, 'fraud-agent');
 
 serve(agent);
