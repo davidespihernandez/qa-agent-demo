@@ -1,0 +1,27 @@
+$kind: http-request
+description: "Route anthropic-tokenlimit has the llm-rate-limit plugin: a budget of 200 tokens per 60 s. This answer uses most of it. Wait a minute between demos."
+url: "{{fabricUrl}}/anthropic-tokenlimit/v1/messages"
+method: POST
+headers:
+  Content-Type: "application/json"
+  anthropic-version: "2023-06-01"
+  fg-api-key: "{{fabricKey}}"
+body:
+  type: json
+  content: |-
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "max_tokens": 300,
+      "messages": [
+        {
+          "role": "user",
+          "content": "Write about 150 words on why gateways help teams."
+        }
+      ]
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('HTTP 200', () => pm.response.to.have.status(200));
+    language: text/javascript
+order: 8000

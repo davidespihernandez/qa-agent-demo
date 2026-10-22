@@ -1,0 +1,12 @@
+$kind: http-request
+description: "The Orders API through the Fabric route /api. Same gateway key; Fabric adds the API key upstream. The agent and any other client get one way in."
+url: "{{fabricUrl}}/api/orders"
+method: GET
+headers:
+  fg-api-key: "{{fabricKey}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('HTTP 200', () => pm.response.to.have.status(200));
+    language: text/javascript
+order: 1300

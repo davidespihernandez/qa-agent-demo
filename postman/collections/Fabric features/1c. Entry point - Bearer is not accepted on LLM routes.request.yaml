@@ -1,0 +1,13 @@
+$kind: http-request
+description: "LLM routes read the key from fg-api-key only; Authorization: Bearer gives 401. A common first mistake, worth knowing."
+url: "{{fabricUrl}}/anthropic/v1/models"
+method: GET
+headers:
+  anthropic-version: "2023-06-01"
+  Authorization: "Bearer {{fabricKey}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('HTTP 401', () => pm.response.to.have.status(401));
+    language: text/javascript
+order: 1200

@@ -50,6 +50,27 @@ Slides: *Fabric in four building blocks*, *Following one request*, *What we set 
      (Sonnet 4.5) or a full model id. Arm D ignores it, because the router decides. One Haiku run in 8 missed an
      order, so say "Haiku passed 7 of 8".
    - Revoke or rotate the gateway key (or use the Killswitch) and re-run: the agent stops, nothing to redeploy.
+4b. **More Fabric controls, with no agent** (Postman collection `Fabric features`; each request has a test, so the
+   Collection Runner shows what Fabric did). Pick the ones the customer cares about:
+
+   | Show | Request | What Fabric does |
+   |---|---|---|
+   | One way in | 1a-1d | valid key 200; no key and `Bearer` both 401 (LLM routes read `fg-api-key` only); the Orders API behind the same key |
+   | Change the model for everyone | 2a-2c | the Transformer on `anthropic-economy` rewrites any requested model to Haiku 4.5, streaming too |
+   | Model allowlist | 3a, 3b | `anthropic-select`: Haiku passes, Opus gets 400 |
+   | Pick the model by prompt | 4a-4c | adaptive router: "Say hi" goes to Haiku, the review task to Opus |
+   | Cost side by side | 5a-5c | same prompt on Sonnet and Haiku, Visualize shows the saving (about 67%) |
+   | Find it afterwards | 6 | search `FABRIC-DEMO-123` in Traces: prompt, tokens, cost, who called |
+   | Request limit | 7a, 7b | `anthropic-ratelimit`: 1 request per minute per key, then 429 |
+   | Token budget | 8a, 8b | `anthropic-tokenlimit`: 200 tokens per minute, then 429 "Token budget exhausted" |
+   | Required header | 9a, 9b | `anthropic-validated`: no `X-Team` gets 422, with it 200 (chargeback by team) |
+   | Redact PII | 10a, 10b | `anthropic-pii`: the model sees `[EMAIL]` and `[CREDIT_CARD]` instead of the real values |
+   | Survive an outage | 11a, 11b | `anthropic-fallback`: the first provider (bad key) returns 401, the router moves to the second, the caller gets 200 |
+
+   Tips: wait a minute between demos of 7 and 8 (rolling windows); send 7b by hand a few seconds after 7a (the counter
+   is not instant, two calls one second apart can both pass); for PII, the model refuses to repeat card numbers, so
+   10a/10b ask about the domain and the last four digits instead. Plugins can take seconds, sometimes minutes, to apply
+   after saving. How each route is built: `docs/FABRIC-SETUP.md`, section 8b.
 
 ## Act 3: observability (10 min)
 
@@ -105,12 +126,12 @@ Slides: *Results*, *Next: plugins that save tokens*.
      not the tool schemas: system messages and tool descriptions are off by default). Cost about 2x arm A if Opus 5.5
      is priced like Opus 4.5 (unverified). Open: do customers get a Jev key? Who tunes the thresholds?
    - MCP bridge and Tool Search: three meta-tools instead of 21 tool schemas. Not yet in production.
-   - Per-key rate limits and budgets.
+   - Per-key rate limits and token budgets: already shown in the `Fabric features` collection (7 and 8); next is applying them per agent key.
 3. Close with the customer's own scenario: which agent, which keys, which models, which tools.
 
 ## Reset between runs
 
-`D1. Orders - RESET` in Postman. Runs with `live: false` never call the webhook.
+`D1. Orders - RESET` in Postman. Runs with `live: false` never call the webhook. The rate-limit demos (7, 8) reset after a minute.
 
 ## Fallbacks
 

@@ -244,6 +244,27 @@ Add in Plugin instances; not needed for the token comparison.
 
 ---
 
+## 8b. Feature routes for the `Fabric features` collection ✅
+
+Each route has base path `/<route name>`, API class Anthropic Messages API, endpoints `/v1/messages`, `/v1/messages/count_tokens`, `/v1/models`, gateway key `fg-api-key`. Use **Routes > New route** (the Anthropic wizard also creates a service and a credential, which you only want for a new service). Scope every plugin to its **route**: the form preselects `anthropic-route`, the main route, so change it before saving.
+
+| Route | Service | Plugin (name) and config | Collection requests |
+|---|---|---|---|
+| `anthropic-economy` | `anthropic` | `transformer`: body_set `model` = `claude-haiku-4-5-20251001`. **Match conditions: path prefix `/anthropic-economy/v1/messages`, method POST.** Without them the plugin ran on body-less GETs and `/v1/models` returned 502 | 2a-2c, 5b |
+| `anthropic-select` | `anthropic-select` (model allowlist: Haiku 4.5, Sonnet 4.5) | none | 3a, 3b |
+| `anthropic-adaptive` | `anthropic` | `adaptive-model-router`, see section 8 | 4a-4c |
+| `anthropic-ratelimit` | `anthropic` | `rate-limit`: count by Consumer, limit 1, window 60 s | 7a, 7b |
+| `anthropic-tokenlimit` | `anthropic` | `llm-rate-limit`: max tokens 200, window 60 s | 8a, 8b |
+| `anthropic-validated` | `anthropic` | `validator` (`require-team-header`): enforce on, deny status 422, rule Request / Header `X-Team` / exists, match POST on `/anthropic-validated/v1/messages` | 9a, 9b |
+| `anthropic-pii` | `anthropic` | `pii-redaction`: redact on, default action Mask (email, card, SSN, AWS key; phone and IP stay off, they match order ids) | 10a, 10b |
+| `anthropic-broken` | `anthropic-broken` (copy of `anthropic` with the credential `sk-ant-invalid`) | none | 11a |
+| `anthropic-fallback` | `anthropic` and `anthropic-broken` both attached to the route | `llm-router` (`anthropic-fallback`): mode fallback, targets `anthropic-broken` then `anthropic`, no retries, on status codes `401, 429, 503` | 11b |
+
+Seen while building them: plugins can take seconds, once about ten minutes, to apply after saving (a 502 or 404 right after a save is not necessarily a bug); the `llm-router` target dropdown lists only the services attached to the route; the rate-limit counter is not instant; the validator's 422 body is `{"error":"validation_failed"}` without the custom message. Collection check: `postman collection run "postman/collections/Fabric features" -e <env with fabricKey>`.
+Other plugins in the catalog, not used yet: `token-counter`, `agent-audit`, `access-log` (global, observational), and `llm-router` modes loadbalance and lightyear.
+
+---
+
 ## 9. Point the repo at the new tenant
 
 Edit `.env` (git-ignored):

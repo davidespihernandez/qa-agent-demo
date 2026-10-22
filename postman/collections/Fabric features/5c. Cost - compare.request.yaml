@@ -1,0 +1,16 @@
+$kind: http-request
+description: "Run 5a and 5b first, then open Visualize. Prices are list prices (Sonnet 4.5 $3/$15, Haiku 4.5 $1/$5 per million tokens), the same estimate Fabric shows in Traces."
+url: "{{fabricUrl}}/anthropic/v1/models"
+method: GET
+headers:
+  anthropic-version: "2023-06-01"
+  fg-api-key: "{{fabricKey}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      const rows = ["anthropic", "anthropic-economy"].map(k => { try { return JSON.parse(pm.collectionVariables.get("cost_" + k)); } catch (e) { return null; } }).filter(Boolean);
+      const base = rows[0];
+      const tr = rows.map(x => `<tr><td>${x.route}</td><td>${x.model}</td><td>${x.inTok}</td><td>${x.outTok}</td><td>$${x.cost == null ? "?" : x.cost.toFixed(5)}</td><td>${base && base.cost && x.cost != null ? ((x.cost / base.cost - 1) * 100).toFixed(0) + "%" : ""}</td></tr>`).join("");
+      pm.visualizer.set(`<style>body{font-family:sans-serif;font-size:14px}td,th{padding:4px 12px;text-align:right}th:first-child,td:first-child{text-align:left}</style><h3>Same prompt, two routes</h3><table><tr><th>Route</th><th>Model</th><th>In</th><th>Out</th><th>Cost</th><th>vs baseline</th></tr>${tr}</table>`);
+    language: text/javascript
+order: 5200

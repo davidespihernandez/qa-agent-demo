@@ -1,0 +1,27 @@
+$kind: http-request
+description: "Send it, then open Fabric > Traces and search for FABRIC-DEMO-123. The trace shows route, model, tokens, estimated cost, latency, the full prompt and the response, and which key made the call."
+url: "{{fabricUrl}}/anthropic/v1/messages"
+method: POST
+headers:
+  Content-Type: "application/json"
+  anthropic-version: "2023-06-01"
+  fg-api-key: "{{fabricKey}}"
+body:
+  type: json
+  content: |-
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "max_tokens": 150,
+      "messages": [
+        {
+          "role": "user",
+          "content": "FABRIC-DEMO-123: name three benefits of an API gateway, one line each."
+        }
+      ]
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('HTTP 200', () => pm.response.to.have.status(200));
+    language: text/javascript
+order: 6000

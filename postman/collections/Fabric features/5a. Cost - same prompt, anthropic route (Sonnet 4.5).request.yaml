@@ -1,0 +1,32 @@
+$kind: http-request
+description: "The same prompt on three routes. This one is the baseline: Sonnet 4.5."
+url: "{{fabricUrl}}/anthropic/v1/messages"
+method: POST
+headers:
+  Content-Type: "application/json"
+  anthropic-version: "2023-06-01"
+  fg-api-key: "{{fabricKey}}"
+body:
+  type: json
+  content: |-
+    {
+      "model": "claude-sonnet-4-5",
+      "max_tokens": 300,
+      "messages": [
+        {
+          "role": "user",
+          "content": "Explain in about 150 words why an API gateway helps when many teams call the same LLM."
+        }
+      ]
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      const r = pm.response.json(); const u = r.usage || {};
+      const P = [["claude-haiku-4-5", 1, 5], ["claude-sonnet-4-5", 3, 15]]; // USD per million tokens (list price)
+      const p = P.find(x => String(r.model).startsWith(x[0]));
+      const cost = p ? (u.input_tokens * p[1] + u.output_tokens * p[2]) / 1e6 : null;
+      pm.collectionVariables.set("cost_anthropic", JSON.stringify({ route: "anthropic", model: r.model, inTok: u.input_tokens, outTok: u.output_tokens, cost }));
+      pm.test("HTTP 200", () => pm.response.to.have.status(200));
+    language: text/javascript
+order: 5000

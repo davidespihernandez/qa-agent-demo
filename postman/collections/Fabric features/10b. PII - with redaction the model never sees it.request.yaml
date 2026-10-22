@@ -1,0 +1,28 @@
+$kind: http-request
+description: "Same prompt through anthropic-pii (pii-redaction plugin, Mask). Fabric replaces the email and the card number with [EMAIL] and [CREDIT_CARD] before the request leaves, so the model says it only sees placeholders."
+url: "{{fabricUrl}}/anthropic-pii/v1/messages"
+method: POST
+headers:
+  Content-Type: "application/json"
+  anthropic-version: "2023-06-01"
+  fg-api-key: "{{fabricKey}}"
+body:
+  type: json
+  content: |-
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "max_tokens": 80,
+      "messages": [
+        {
+          "role": "user",
+          "content": "In one short sentence, say what domain the email address in this text uses and what the last four digits of the card are. Text: contact ana@example.com, card 4111 1111 1111 1111."
+        }
+      ]
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("HTTP 200", () => pm.response.to.have.status(200));
+      pm.test("The real email never reached the model", () => pm.expect(pm.response.text()).to.not.include("example.com"));
+    language: text/javascript
+order: 10100

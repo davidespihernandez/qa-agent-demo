@@ -1,0 +1,28 @@
+$kind: http-request
+description: "Control: a normal route. The model reads the email and the card number: \"example.com\" and \"1111\"."
+url: "{{fabricUrl}}/anthropic/v1/messages"
+method: POST
+headers:
+  Content-Type: "application/json"
+  anthropic-version: "2023-06-01"
+  fg-api-key: "{{fabricKey}}"
+body:
+  type: json
+  content: |-
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "max_tokens": 80,
+      "messages": [
+        {
+          "role": "user",
+          "content": "In one short sentence, say what domain the email address in this text uses and what the last four digits of the card are. Text: contact ana@example.com, card 4111 1111 1111 1111."
+        }
+      ]
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("HTTP 200", () => pm.response.to.have.status(200));
+      pm.test("Model saw the real values", () => pm.expect(pm.response.text()).to.include("example.com"));
+    language: text/javascript
+order: 10000

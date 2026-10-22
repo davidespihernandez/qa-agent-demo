@@ -1,0 +1,27 @@
+$kind: http-request
+description: "Route anthropic-fallback has the llm-router plugin in fallback mode: it tries anthropic-broken first, gets 401 and moves to anthropic. The caller gets a 200 and never sees the failure. Open the trace to see both attempts."
+url: "{{fabricUrl}}/anthropic-fallback/v1/messages"
+method: POST
+headers:
+  Content-Type: "application/json"
+  anthropic-version: "2023-06-01"
+  fg-api-key: "{{fabricKey}}"
+body:
+  type: json
+  content: |-
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "max_tokens": 40,
+      "messages": [
+        {
+          "role": "user",
+          "content": "Say hi"
+        }
+      ]
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('HTTP 200', () => pm.response.to.have.status(200));
+    language: text/javascript
+order: 11100

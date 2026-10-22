@@ -1,0 +1,27 @@
+$kind: http-request
+description: "Send it right after 7a. Fabric answers 429 and the call never reaches Anthropic. Wait a minute and it passes again. The counter is not instant: two calls sent about a second apart can both pass (seen in a Collection Runner run), so in a live demo send 7b by hand a few seconds after 7a, or send it twice."
+url: "{{fabricUrl}}{{rateLimitRoute}}/v1/messages"
+method: POST
+headers:
+  Content-Type: "application/json"
+  anthropic-version: "2023-06-01"
+  fg-api-key: "{{fabricKey}}"
+body:
+  type: json
+  content: |-
+    {
+      "model": "claude-haiku-4-5-20251001",
+      "max_tokens": 40,
+      "messages": [
+        {
+          "role": "user",
+          "content": "Say hi"
+        }
+      ]
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('HTTP 429', () => pm.response.to.have.status(429));
+    language: text/javascript
+order: 7100

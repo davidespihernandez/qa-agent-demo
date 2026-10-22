@@ -1,0 +1,29 @@
+$kind: http-request
+description: "Route anthropic-economy has a Transformer plugin (body_set model = claude-haiku-4-5-20251001), matched on POST /anthropic-economy/v1/messages only. Streaming requests are rewritten too: see the model in the message_start event."
+url: "{{fabricUrl}}/anthropic-economy/v1/messages"
+method: POST
+headers:
+  Content-Type: "application/json"
+  anthropic-version: "2023-06-01"
+  fg-api-key: "{{fabricKey}}"
+body:
+  type: json
+  content: |-
+    {
+      "model": "claude-opus-5-5",
+      "max_tokens": 40,
+      "messages": [
+        {
+          "role": "user",
+          "content": "Count from 1 to 5."
+        }
+      ],
+      "stream": true
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("HTTP 200", () => pm.response.to.have.status(200));
+      pm.test("Served by Haiku", () => pm.expect(pm.response.text()).to.include("claude-haiku-4-5"));
+    language: text/javascript
+order: 2150

@@ -1,6 +1,6 @@
 $kind: http-request
 description: "Route anthropic-adaptive (plugin adaptive-model-router, decision service Jev, jev-1.13.0). We ask for claude-sonnet-4-5; look at the model field of the response. Simple prompt: the router picks claude-haiku-5-5. Also Haiku for '2+2', 'capital of France', a translation and 'is 12,500 greater than 10,000?'. Tested 2026-10-21."
-url: "https://david-esp-s-fabric-team.dp.fabricgateway.ai/anthropic-adaptive/v1/messages"
+url: "{{fabricUrl}}/anthropic-adaptive/v1/messages"
 method: POST
 headers:
   Content-Type: application/json
@@ -14,4 +14,9 @@ body:
       "max_tokens": 20,
       "messages": [{ "role": "user", "content": "Say hi" }]
     }
-order: 9300
+order: 4000
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('HTTP 200', () => pm.response.to.have.status(200));
+    language: text/javascript

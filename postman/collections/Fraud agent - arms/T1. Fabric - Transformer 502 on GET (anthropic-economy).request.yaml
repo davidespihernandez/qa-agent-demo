@@ -1,8 +1,0 @@
-$kind: http-request
-description: "Fabric bug repro. Route anthropic-economy has a Transformer plugin (body_set model = claude-haiku-4-5-20251001, no Methods or Path conditions). This GET has no body and returns 502 'error code: 502'. The same GET on /anthropic and /anthropic-select returns 200. Tested 2026-10-20."
-url: "https://david-esp-s-fabric-team.dp.fabricgateway.ai/anthropic-economy/v1/models"
-method: GET
-headers:
-  anthropic-version: "2023-06-01"
-  fg-api-key: "{{fabricKey}}"
-order: 9000
