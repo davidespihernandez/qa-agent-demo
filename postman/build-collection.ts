@@ -51,9 +51,13 @@ const test = (arm: string, label = arm) => [
 const compareTest = [
   'const rows = ["A","F","F-eco","F-cheap","B","B-ro","C"].map(a => { try { return JSON.parse(pm.collectionVariables.get("res_" + a)); } catch (e) { return null; } }).filter(Boolean);',
   'const base = rows.find(x => x.arm === "A");',
-  'const d = x => base && base.inTok ? ((x.inTok / base.inTok - 1) * 100).toFixed(1) + "%" : "";',
-  'const tr = rows.map(x => `<tr><td>${x.arm}</td><td>${x.verdict}</td><td>${x.tools}</td><td>${x.inTok}</td><td>${d(x)}</td><td>${x.outTok}</td><td>$${x.cost.toFixed(3)}</td><td>${x.sec}s</td></tr>`).join("");',
-  'pm.visualizer.set(`<style>body{font-family:sans-serif;font-size:14px}td,th{padding:4px 12px;text-align:right}th:first-child,td:first-child{text-align:left}</style><h3>Same agent, same task: what changed per arm</h3><table><tr><th>Arm</th><th>Verdict</th><th>Tools sent</th><th>Input tokens</th><th>vs A</th><th>Output</th><th>Est. cost</th><th>Time</th></tr>${tr}</table>`);',
+  'const pct = (v, b) => b ? (v / b - 1) * 100 : null;',
+  'const fmt = v => v == null ? "" : (v > 0 ? "+" : "") + v.toFixed(0) + "%";',
+  'const d = x => fmt(base && base.inTok ? pct(x.inTok, base.inTok) : null);',
+  'const dc = x => x.arm === "A" ? "baseline" : fmt(base && base.cost && x.cost != null ? pct(x.cost, base.cost) : null);',
+  'const money = c => c == null ? "n/a" : "$" + c.toFixed(3);',
+  'const tr = rows.map(x => `<tr><td>${x.arm}</td><td>${x.verdict}</td><td>${x.tools}</td><td>${x.inTok}</td><td>${d(x)}</td><td>${x.outTok}</td><td>${money(x.cost)}</td><td><b>${dc(x)}</b></td><td>${x.sec}s</td></tr>`).join("");',
+  'pm.visualizer.set(`<style>body{font-family:sans-serif;font-size:14px}td,th{padding:4px 12px;text-align:right}th:first-child,td:first-child{text-align:left}</style><h3>Same agent, same task: what changed per arm</h3><table><tr><th>Arm</th><th>Verdict</th><th>Tools sent</th><th>Input tokens</th><th>vs A</th><th>Output</th><th>Est. cost</th><th>Cost vs A</th><th>Time</th></tr>${tr}</table>`);',
 ];
 
 const dir = join(import.meta.dir, 'collections', 'Fraud agent - arms');
@@ -92,6 +96,7 @@ writeFileSync(
     '  ordersUrl: https://david-esp-s-fabric-team.dp.fabricgateway.ai/api',
     '  fabricKey: ""',
     '  demoKey: ""',
+    ...['A', 'F', 'F-eco', 'F-cheap', 'B', 'B-ro', 'C'].map((k) => `  res_${k}: ""`),
   ].join('\n') + '\n',
 );
 
