@@ -1,6 +1,7 @@
 # Demo script: a governed fraud agent (about 50 minutes)
 
-One agent, one story: **build it on Astro, put Fabric in front, watch and control it.**
+One agent, one story: **Fabric is the front door (keys, models, limits), Astro builds and runs the agent behind it, then we watch and control it.**
+Fabric comes first because the agent on Astro already uses it: if we show Astro first, every call to the LLM and the APIs raises questions.
 Token savings are the last act ("what comes next"), not the main claim.
 
 The agent reviews orders from the Orders/Users/Payments APIs and reports suspicious ones
@@ -12,45 +13,26 @@ The agent reviews orders from the Orders/Users/Payments APIs and reports suspici
 - Run `D1. Orders - RESET` in the Postman collection so the data is two clean orders.
 - Have a recorded run and screenshots ready as a fallback (agent runs are non-deterministic).
 
-## Act 1: Astro, build and run the agent (15 min)
+## Intro: the scenario (2 min)
 
-Slides: *Astro turns an agent into a service*, *Anatomy of the agent*.
+Slide: *What are we building?*. A test agent that detects fraud in an existing Orders API, following a few rules written
+in a markdown file (`agent/agent/fraud-policy.md`: over $10,000, unknown customer, 3 or more identical orders). The rules
+are only an example, open the file if asked. The agent needs an LLM key and API access: Fabric is how we give it those
+safely, Astro is where it lives.
 
-1. **Brain, hands, instructions.** Open `agent/agent/fraud-agent.ts`:
-   - **Brain:** the model. `astropods.yml` declares `models: anthropic`; `QA_MODEL` picks the model;
-     `LLM_BASE_URL` decides whether it goes direct or through Fabric. Nothing else in the code changes.
-   - **Hands:** the tools. API tools are generated from the OpenAPI spec (`specs/demo-apis.json`),
-     read-only. `report_fraud` is the one write: it POSTs to the Flow webhook with an Idempotency-Key.
-   - **Instructions:** `fraud-policy.md`, plain English. Change the policy, change the behaviour.
-2. **Run it locally:** `ast dev`, open the playground, ask for a review. Show the steps (read orders,
-   look up each customer once, report each finding).
-3. **Change and redeploy:** edit the policy (for example raise the limit to $20,000), `ast blueprint push`,
-   run again, see a different result. Policy version is part of the alert key, so a new policy means new alerts.
-4. **Use it from outside:** Postman `POST /review` (arm, `live`, `wait`). The same agent answers chat and HTTP.
+Slide: *Astro runs it, Fabric governs it*. The big picture before the details: Astro builds, runs and deploys the agent
+(code, container, live endpoint, runtime traces). Fabric sits in front of everything the agent calls (one gateway key,
+provider keys in a vault, routing, limits, PII masking, traces with tokens and cost). Behind Fabric: the LLMs and the
+Orders, Users and Payments APIs (MCP tools next).
 
-## Act 2: Fabric, the front door (15 min)
+## Act 1: Fabric, the front door (15 to 20 min)
 
-Slides: *Fabric in four building blocks*, *Following one request*, *What we set up in Fabric*.
+Slides: *Fabric sits between agents and what they call*, *Fabric in four building blocks*, *Following one request*,
+*Before Fabric*, *With Fabric*, *Control*.
 
 1. **Concepts in 2 minutes:** service (where traffic ends up), route (the address on the gateway),
    plugin (a rule on a route), credential (a secret in the vault).
-2. **What we set up** (show the console, same names as the slide):
-   - `/agent`: our agent on Astro, so Postman calls it through Fabric.
-   - `/api`: the Orders API, so the agent reads data through Fabric.
-   - `/anthropic`: Anthropic, so the agent calls the LLM through Fabric.
-   - `/anthropic-select`: Anthropic, but the service only allows Haiku 4.5 and Sonnet 4.5.
-3. **Simplified authentication.** Compare arm A and arm F (`POST /review`, `arm: "A"` then `"F"`):
-   - A: the agent holds the Anthropic key and talks to every API itself.
-   - F: the agent holds one gateway key. The Anthropic key lives in Fabric's vault, write-only.
-   Show the credential page and the key-auth plugin on a route.
-4. **Control.**
-   - Ask `/anthropic-select` for Opus: `400 Model ... is not allowed for service "anthropic-select"`.
-     Fabric decides which models an agent or team may use, not the agent.
-   - The model can be chosen per request: `POST /review` with `"model": "cheap"` (Haiku 4.5), `"expensive"`
-     (Sonnet 4.5) or a full model id. Arm D ignores it, because the router decides. One Haiku run in 8 missed an
-     order, so say "Haiku passed 7 of 8".
-   - Revoke or rotate the gateway key (or use the Killswitch) and re-run: the agent stops, nothing to redeploy.
-4b. **More Fabric controls, with no agent** (Postman collection `Fabric features`; each request has a test, so the
+2. **See Fabric on its own, with no agent** (Postman collection `Fabric features`; each request has a test, so the
    Collection Runner shows what Fabric did). Pick the ones the customer cares about:
 
    | Show | Request | What Fabric does |
@@ -71,6 +53,41 @@ Slides: *Fabric in four building blocks*, *Following one request*, *What we set 
    is not instant, two calls one second apart can both pass); for PII, the model refuses to repeat card numbers, so
    10a/10b ask about the domain and the last four digits instead. Plugins can take seconds, sometimes minutes, to apply
    after saving. How each route is built: `docs/FABRIC-SETUP.md`, section 8b.
+3. **Say it:** none of this needed an agent. Next we build one, and it will only hold a gateway key.
+
+## Act 2: Astro, build and run the agent (15 min)
+
+Slides: *Astro turns an agent into a service*, *Five layers*, *Anatomy of the agent*, *The agent plugs into any system through a webhook*, *What we set up in Fabric*.
+
+1. **Brain, hands, instructions.** Open `agent/agent/fraud-agent.ts`:
+   - **Brain:** the model. `astropods.yml` declares `models: anthropic`; `QA_MODEL` picks the model;
+     `LLM_BASE_URL` decides whether it goes direct or through Fabric. Nothing else in the code changes.
+   - **Hands:** the tools. API tools are generated from the OpenAPI spec (`specs/demo-apis.json`),
+     read-only. `report_fraud` is the one write: it POSTs to the Flow webhook with an Idempotency-Key.
+   - **Instructions:** `fraud-policy.md`, plain English. Change the policy, change the behaviour.
+2. **Run it locally:** `ast dev`, open the playground, ask for a review. Show the steps (read orders,
+   look up each customer once, report each finding).
+3. **Change and redeploy:** edit the policy (for example raise the limit to $20,000), `ast blueprint push`,
+   run again, see a different result. Policy version is part of the alert key, so a new policy means new alerts.
+4. **Use it from outside:** Postman `POST /review` (arm, `live`, `wait`). The same agent answers chat and HTTP.
+
+5. **Connect it to Fabric.** (Slide: *What we set up in Fabric*.)
+   **Simplified authentication.** Compare arm A and arm F (`POST /review`, `arm: "A"` then `"F"`):
+   - A: the agent holds the Anthropic key and talks to every API itself.
+   - F: the agent holds one gateway key. The Anthropic key lives in Fabric's vault, write-only.
+   Show the credential page and the key-auth plugin on a route.
+   **What we set up in the console** (same names as the slide):
+   - `/agent`: our agent on Astro, so Postman calls it through Fabric.
+   - `/api`: the Orders API, so the agent reads data through Fabric.
+   - `/anthropic`: Anthropic, so the agent calls the LLM through Fabric.
+   - `/anthropic-select`: Anthropic, but the service only allows Haiku 4.5 and Sonnet 4.5.
+   **Control from Fabric, not from the agent.**
+   - Ask `/anthropic-select` for Opus: `400 Model ... is not allowed for service "anthropic-select"`.
+     Fabric decides which models an agent or team may use, not the agent.
+   - The model can be chosen per request: `POST /review` with `"model": "cheap"` (Haiku 4.5), `"expensive"`
+     (Sonnet 4.5) or a full model id. Arm D ignores it, because the router decides. One Haiku run in 8 missed an
+     order, so say "Haiku passed 7 of 8".
+   - Revoke or rotate the gateway key (or use the Killswitch) and re-run: the agent stops, nothing to redeploy.
 
 ## Act 3: observability (10 min)
 
