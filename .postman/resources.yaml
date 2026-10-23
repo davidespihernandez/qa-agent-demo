@@ -1,9 +1,17 @@
-# Use this workspace to collaborate
 workspace:
   id: daa10097-3930-4947-bb9c-442c1c7a4d22
-
 localResources:
   collections:
     - ../postman/collections/Fraud agent - arms
   specs:
     - ../agent/agent/specs/demo-apis.json
+cloudResources:
+  collections:
+    ../postman/collections/Fraud agent - arms: 53522859-7fa25450-25fb-4922-b8b8-61e0e700f54c
+    ../postman/collections/Fabric features: 53522859-82055e24-77df-485d-a9a3-9a523f427a1e
+  environments:
+    ../postman/environments/Fabric Production.environment.yaml: 53522859-352951a1-cd15-4772-8e26-c0f7ee6742e0
+  specs:
+    ../agent/agent/specs/demo-apis.json: 13613325-ad72-4716-a6f3-d38d6bb3392e
+  globals:
+    ../postman/globals/workspace.globals.yaml: f666eac5-c1ab-41e5-8262-51ec49f81611
