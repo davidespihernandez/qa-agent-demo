@@ -20,19 +20,20 @@ in a markdown file (`agent/agent/fraud-policy.md`: over $10,000, unknown custome
 are only an example, open the file if asked. The agent needs an LLM key and API access: Fabric is how we give it those
 safely, Astro is where it lives.
 
-Slide: *Astro runs it, Fabric governs it*. The big picture before the details: Astro builds, runs and deploys the agent
+Slide: *System architecture*. The big picture before the details: Astro builds, runs and deploys the agent
 (code, container, live endpoint, runtime traces). Fabric sits in front of everything the agent calls (one gateway key,
 provider keys in a vault, routing, limits, PII masking, traces with tokens and cost). Behind Fabric: the LLMs and the
 Orders, Users and Payments APIs (MCP tools next).
 
 ## Act 1: Fabric, the front door (15 to 20 min)
 
-Slides: *Fabric sits between agents and what they call*, *Fabric in four building blocks*, *Following one request*,
-*Before Fabric*, *With Fabric*, *Control*.
+Slides: divider *Postman Fabric Gateway*, *Following one request through Fabric* (agent, route, plugin, service,
+provider), *Before Fabric*, *With Fabric*, *Fabric features and plugins*.
 
-1. **Concepts in 2 minutes:** service (where traffic ends up), route (the address on the gateway),
+1. **Concepts in 2 minutes** (while on *Following one request*): service (where traffic ends up), route (the address on the gateway),
    plugin (a rule on a route), credential (a secret in the vault).
-2. **See Fabric on its own, with no agent** (Postman collection `Fabric features`; each request has a test, so the
+2. **See Fabric on its own, with no agent.** Switch to the slide *Fabric features and plugins* (the table follows the
+   numbering of the collection, with a Type column: Plugin or Feature), then run each request in Postman (Postman collection `Fabric features`; each request has a test, so the
    Collection Runner shows what Fabric did). Pick the ones the customer cares about:
 
    | Show | Request | What Fabric does |
@@ -57,7 +58,7 @@ Slides: *Fabric sits between agents and what they call*, *Fabric in four buildin
 
 ## Act 2: Astro, build and run the agent (15 min)
 
-Slides: *Astro turns an agent into a service*, *Five layers*, *Anatomy of the agent*, *The agent plugs into any system through a webhook*, *What we set up in Fabric*.
+Slides: divider *Astro*, *Astro turns an agent into a service*, *Five layers*, *Anatomy of the agent*, *The agent plugs into any system through a webhook*, *What we set up in Fabric*.
 
 1. **Brain, hands, instructions.** Open `agent/agent/fraud-agent.ts`:
    - **Brain:** the model. `astropods.yml` declares `models: anthropic`; `QA_MODEL` picks the model;
