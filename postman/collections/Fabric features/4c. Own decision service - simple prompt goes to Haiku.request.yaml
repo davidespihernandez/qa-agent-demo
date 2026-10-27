@@ -1,0 +1,28 @@
+$kind: http-request
+description: "Route anthropic-adaptive-rules uses the same adaptive-model-router plugin as 4a/4b, but its decision connection is our own deterministic service (decision-service, on Astro) instead of Jev. We always ask for claude-sonnet-4-5; our rules answer tier 'fast', so the plugin sends the call to claude-haiku-5-5. No LLM makes the decision: same prompt, same model."
+url: "{{fabricUrl}}/anthropic-adaptive-rules/v1/messages"
+method: POST
+headers:
+  Content-Type: application/json
+  anthropic-version: "2023-06-01"
+  fg-api-key: "{{fabricKey}}"
+body:
+  type: json
+  content: |-
+    {
+      "model": "claude-sonnet-4-5",
+      "max_tokens": 20,
+      "messages": [
+        {
+          "role": "user",
+          "content": "Say hi"
+        }
+      ]
+    }
+order: 4200
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('HTTP 200', () => pm.response.to.have.status(200));
+      pm.test('Routed to claude-haiku-5-5', () => pm.expect(pm.response.json().model).to.include('claude-haiku-5-5'));
+    language: text/javascript

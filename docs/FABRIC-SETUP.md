@@ -253,12 +253,28 @@ Each route has base path `/<route name>`, API class Anthropic Messages API, endp
 | `anthropic-economy` | `anthropic` | `transformer`: body_set `model` = `claude-haiku-4-5-20251001`. **Match conditions: path prefix `/anthropic-economy/v1/messages`, method POST.** Without them the plugin ran on body-less GETs and `/v1/models` returned 502 | 2a-2b, 5b |
 | `anthropic-select` | `anthropic-select` (model allowlist: Haiku 4.5, Sonnet 4.5) | none | 3a, 3b |
 | `anthropic-adaptive` | `anthropic` | `adaptive-model-router`, see section 8 | 4a-4b |
+| `anthropic-adaptive-rules` | `anthropic` | `adaptive-model-router` with **our own decision service** (`decision-rules`), see section 8c | 4c-4e |
 | `anthropic-ratelimit` | `anthropic` | `rate-limit`: count by Consumer, limit 1, window 60 s | 6a, 6b |
 | `anthropic-tokenlimit` | `anthropic` | `llm-rate-limit`: max tokens 200, window 60 s | 7a, 7b |
 | `anthropic-validated` | `anthropic` | `validator` (`require-team-header`): enforce on, deny status 422, rule Request / Header `X-Team` / exists, match POST on `/anthropic-validated/v1/messages` | 8a, 8b |
 | `anthropic-pii` | `anthropic` | `pii-redaction`: redact on, default action Mask (email, card, SSN, AWS key; phone and IP stay off, they match order ids) | 9a, 9b |
 | `anthropic-broken` | `anthropic-broken` (copy of `anthropic` with the credential `sk-ant-invalid`) | none | 10a |
 | `anthropic-fallback` | `anthropic` and `anthropic-broken` both attached to the route | `llm-router` (`anthropic-fallback`): mode fallback, targets `anthropic-broken` then `anthropic`, no retries, on status codes `401, 429, 503` | 10b |
+
+### 8c. Your own decision service for the adaptive router
+
+The router asks a "decision connection" which tier a prompt needs. The default is Jev. Any HTTP service that answers in the Jev format works, so we run a deterministic one (no LLM: same prompt, same model). Code: `decision-service/`.
+
+1. **Deploy it on Astro.** `cd decision-service`, `ast blueprint push -y -V private`, `ast deploy decision-service --var DEBUG_KEY=<random>`. In the Astro dashboard set the agent to **Public**, then redeploy: Fabric needs the `agents.public.astropods.ai` host (check `GET /health` returns `{"ok":true}`).
+2. **Fabric connection:** Services / Connections > new HTTP connection `decision-rules`, target = the public URL (no trailing slash), upstream auth **Bearer token**, Shared; untick "Create gateway route". Then **Credentials > Upstream credential** for `decision-rules` with any bearer value (the service ignores it). Without a credential the plugin fails in about 1 ms with "Jev decision failed".
+3. **Route:** Routes > New route `anthropic-adaptive-rules`, protocol LLM, connection `anthropic`, base path `/anthropic-adaptive-rules`, gateway key.
+4. **Plugin:** `adaptive-model-router`, name `anthropic-adaptive-rules`, scope **route** `anthropic-adaptive-rules`, Connection `anthropic`, Decision connection `decision-rules`, leave Jev model `jev-1.13.0`.
+
+What the plugin sends (`POST /v1/systemone`, seen in `GET /debug/requests` with the `x-debug-key` header): `state.request` plus `state.context` (`prompt_tokens_estimate`, `has_code`, `needs_structured_output`, `is_long_context`, `has_tools`, `tool_names`) and four questions: `tier` (choice: fast, balanced, advanced, reasoning), `deep_reasoning` and `underspecified` (noul), `blast_radius` (score Low/Medium/High).
+
+What it expects back is exactly the documented Jev shape: `{model, answers, usage: {input_tokens, output_tokens}}`. Extra top-level fields (`id`, `provider`, `usage.cost`) made the plugin reject the answer ("Jev decision failed" after a 200).
+
+How the tier becomes a model (observed 2026-10-27): `fast` = claude-haiku-5-5, `balanced` = claude-sonnet-5-5, `advanced` = claude-opus-5-5. `reasoning` maps to a model our Anthropic workspace cannot call (rate limit 0), so the service never returns it. The rules live in `pickTier` in `decision-service/server.ts` (keywords and length), change them and redeploy to change the routing.
 
 Seen while building them: plugins can take seconds, once about ten minutes, to apply after saving (a 502 or 404 right after a save is not necessarily a bug); the `llm-router` target dropdown lists only the services attached to the route; the rate-limit counter is not instant; the validator's 422 body is `{"error":"validation_failed"}` without the custom message. Collection check: `postman collection run "postman/collections/Fabric features" -e <env with fabricKey>`.
 Other plugins in the catalog, not used yet: `token-counter`, `agent-audit`, `access-log` (global, observational), and `llm-router` modes loadbalance and lightyear.

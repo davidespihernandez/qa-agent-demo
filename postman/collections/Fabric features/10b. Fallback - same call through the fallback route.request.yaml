@@ -3,8 +3,8 @@ description: "Route anthropic-fallback has the llm-router plugin in fallback mod
 url: "{{fabricUrl}}/anthropic-fallback/v1/messages"
 method: POST
 headers:
-  Content-Type: "application/json"
-  anthropic-version: "2023-06-01"
+  Content-Type: application/json
+  anthropic-version: 2023-06-01
   fg-api-key: "{{fabricKey}}"
 body:
   type: json
@@ -21,7 +21,7 @@ body:
     }
 scripts:
   - type: afterResponse
-    code: |-
-      pm.test('HTTP 200', () => pm.response.to.have.status(200));
+    code: pm.test('HTTP 200', () => pm.response.to.have.status(200));
     language: text/javascript
+examples: .resources/10b. Fallback - same call through the fallback route.resources/examples
 order: 10100

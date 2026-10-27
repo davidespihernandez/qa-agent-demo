@@ -3,8 +3,8 @@ description: "Route anthropic-validated has the validator plugin: every request 
 url: "{{fabricUrl}}/anthropic-validated/v1/messages"
 method: POST
 headers:
-  Content-Type: "application/json"
-  anthropic-version: "2023-06-01"
+  Content-Type: application/json
+  anthropic-version: 2023-06-01
   fg-api-key: "{{fabricKey}}"
 body:
   type: json
@@ -21,7 +21,7 @@ body:
     }
 scripts:
   - type: afterResponse
-    code: |-
-      pm.test('HTTP 422', () => pm.response.to.have.status(422));
+    code: pm.test('HTTP 422', () => pm.response.to.have.status(422));
     language: text/javascript
+examples: .resources/8a. Validator - missing X-Team header is refused.resources/examples
 order: 8000

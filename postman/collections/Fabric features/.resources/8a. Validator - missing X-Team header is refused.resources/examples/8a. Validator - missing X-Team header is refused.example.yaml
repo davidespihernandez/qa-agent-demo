@@ -1,0 +1,44 @@
+$kind: http-example
+request:
+  url: "{{fabricUrl}}/anthropic-validated/v1/messages"
+  method: POST
+  headers:
+    Content-Type: application/json
+    anthropic-version: 2023-06-01
+    fg-api-key: "{{fabricKey}}"
+  body:
+    type: json
+    content: |-
+      {
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 40,
+        "messages": [
+          {
+            "role": "user",
+            "content": "Say hi"
+          }
+        ]
+      }
+response:
+  statusCode: 422
+  statusText: ""
+  headers:
+    :status: "422"
+    date: Tue, 27 Oct 2026 11:37:05 GMT
+    content-type: application/json
+    content-length: "29"
+    x-request-id: 5b84b865-1638-44c5-af5f-b3c7314dfe3b
+    x-envoy-upstream-service-time: "55"
+    cf-cache-status: DYNAMIC
+    nel: '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+    set-cookie: __cf_bm=RpQ4OHObxM65CJ6UuutSWtMy3SECWMZYomj2XVfRt0U-1793101024.8006806-1.0.1.1-Lk3uQMEvg.cw1m1rxI6WDsShU0J_lEn0in1iJQvJpuglT8VNrQYLx1NZ1pzJBDoWC0e1HAHQU5ElfWUjVeLbGG5875.P9zaWcG9TRZumb4HpaoCAeE7qvbNKWDOruNCh; HttpOnly; SameSite=None; Secure; Path=/; Domain=fabricgateway.ai; Expires=Tue, 27 Oct 2026 12:07:05 GMT
+    report-to: '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=PEHGTSZLKcHrfjd4%2Fvm1osKt4sNZaFg5h0Mgf%2BX0cYnCtuLsgUWr4qBFmF8sKZKiVCq5LBSnAmLFP2NaI%2FzIjjUenmsGRq4REf2I7SRzhNI5DcUjTWOi0QluOw6D1xvdGTFlE1SPE90tDD%2F6jfod0YYEySqEsCBTMniah1c%3D"}]}'
+    server: cloudflare
+    cf-ray: a511681cfd242470-MAD
+  body:
+    type: json
+    content: |-
+      {
+        "error": "validation_failed"
+      }
+order: 1000

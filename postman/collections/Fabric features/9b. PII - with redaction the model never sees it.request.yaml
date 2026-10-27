@@ -1,10 +1,10 @@
 $kind: http-request
-description: "Same prompt through anthropic-pii (pii-redaction plugin, Mask). Fabric replaces the email and the card number with [EMAIL] and [CREDIT_CARD] before the request leaves, so the model says it only sees placeholders."
+description: Same prompt through anthropic-pii (pii-redaction plugin, Mask). Fabric replaces the email and the card number with [EMAIL] and [CREDIT_CARD] before the request leaves, so the model says it only sees placeholders.
 url: "{{fabricUrl}}/anthropic-pii/v1/messages"
 method: POST
 headers:
-  Content-Type: "application/json"
-  anthropic-version: "2023-06-01"
+  Content-Type: application/json
+  anthropic-version: 2023-06-01
   fg-api-key: "{{fabricKey}}"
 body:
   type: json
@@ -25,4 +25,5 @@ scripts:
       pm.test("HTTP 200", () => pm.response.to.have.status(200));
       pm.test("The real email never reached the model", () => pm.expect(pm.response.text()).to.not.include("example.com"));
     language: text/javascript
+examples: .resources/9b. PII - with redaction the model never sees it.resources/examples
 order: 9100

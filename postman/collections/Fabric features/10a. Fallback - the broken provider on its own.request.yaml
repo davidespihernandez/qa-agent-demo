@@ -1,10 +1,10 @@
 $kind: http-request
-description: "Service anthropic-broken has an invalid Anthropic key, standing in for a provider outage. Called directly it returns 401 invalid x-api-key."
+description: Service anthropic-broken has an invalid Anthropic key, standing in for a provider outage. Called directly it returns 401 invalid x-api-key.
 url: "{{fabricUrl}}/anthropic-broken/v1/messages"
 method: POST
 headers:
-  Content-Type: "application/json"
-  anthropic-version: "2023-06-01"
+  Content-Type: application/json
+  anthropic-version: 2023-06-01
   fg-api-key: "{{fabricKey}}"
 body:
   type: json
@@ -21,7 +21,7 @@ body:
     }
 scripts:
   - type: afterResponse
-    code: |-
-      pm.test('HTTP 401', () => pm.response.to.have.status(401));
+    code: pm.test('HTTP 401', () => pm.response.to.have.status(401));
     language: text/javascript
+examples: .resources/10a. Fallback - the broken provider on its own.resources/examples
 order: 10000

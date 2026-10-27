@@ -1,0 +1,54 @@
+$kind: http-example
+request:
+  url: "{{fabricUrl}}/anthropic-broken/v1/messages"
+  method: POST
+  headers:
+    Content-Type: application/json
+    anthropic-version: 2023-06-01
+    fg-api-key: "{{fabricKey}}"
+  body:
+    type: json
+    content: |-
+      {
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 40,
+        "messages": [
+          {
+            "role": "user",
+            "content": "Say hi"
+          }
+        ]
+      }
+response:
+  statusCode: 401
+  statusText: ""
+  headers:
+    :status: "401"
+    date: Tue, 27 Oct 2026 11:39:02 GMT
+    content-type: application/json
+    content-length: "130"
+    cache-control: no-store
+    cf-cache-status: DYNAMIC
+    x-envoy-upstream-service-time: "129"
+    content-security-policy: default-src 'none'; frame-ancestors 'none'
+    request-id: req_011CgSgDhNh3UJ7SP3a8mFx7
+    server: cloudflare
+    server-timing: x-originResponse;dur=
+    x-request-id: fc6eb86d-470a-4a5f-a8d4-ff16931f48d1
+    x-robots-tag: none
+    x-should-retry: "false"
+    nel: '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+    report-to: '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=rzzIQ3sJl8v%2Fb293uNsf4ckyfh0sCdu8nG3juzk0U%2BoYOABhGgal49lzJ6K8XnElOESc38Heam2AdGezTy%2FW0kI1XvFUKREOpF7DgCWWafCDkbZ59%2B2ZQobY1RyuEqaW9V0%2Fo8eTEKD%2FQ4KQBnxYCbdGU5oa1lrumJalJ%2Fs%3D"}]}'
+    cf-ray: a5116afbdc012470-MAD
+  body:
+    type: json
+    content: |-
+      {
+        "type": "error",
+        "error": {
+          "type": "authentication_error",
+          "message": "invalid x-api-key"
+        },
+        "request_id": "req_011CgSgDhNh3UJ7SP3a8mFx7"
+      }
+order: 1000

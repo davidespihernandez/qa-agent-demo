@@ -42,6 +42,7 @@ provider), *Before Fabric*, *With Fabric*, *Fabric features and plugins*.
    | Change the model for everyone | 2a-2b | the Transformer on `anthropic-economy` rewrites any requested model to Haiku 4.5, streaming too |
    | Model allowlist | 3a, 3b | `anthropic-select`: Haiku passes, Opus gets 400 |
    | Pick the model by prompt | 4a-4b | adaptive router: "Say hi" goes to Haiku, the review task to Opus |
+   | Your own routing rules | 4c-4e | same plugin, but the decision comes from our own small service (`decision-service/`, on Astro): Haiku for "Say hi", Sonnet for the fraud review, Opus for an architecture design. Deterministic, you can change the rules |
    | Cost side by side | 5a-5c | same prompt on Sonnet and Haiku, Visualize shows the saving (about 67%) |
    | Request limit | 6a, 6b | `anthropic-ratelimit`: 1 request per minute per key, then 429 |
    | Token budget | 7a, 7b | `anthropic-tokenlimit`: 200 tokens per minute, then 429 "Token budget exhausted" |

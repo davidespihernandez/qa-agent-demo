@@ -41,6 +41,7 @@ Every run is checked by an oracle: the agent passes only if the set of flagged o
 | `agent/` | the agent (Mastra), its HTTP API (`POST /review`) and `astropods.yml` |
 | `harness/` | runs one or more arms: `bun harness/run.ts --arm F-eco --runs 3` |
 | `postman/` | two collections: `Fraud agent - arms` (every arm, data-reset requests, the Flow webhook; built by `build-collection.ts`) and `Fabric features` (26 requests that show Fabric on its own: auth, Transformer, allowlist, adaptive router, cost, traces, rate limits, validator, PII, fallback; built by `build-fabric-collection.ts`) |
+| `decision-service/` | a small deterministic HTTP service (Bun, deployed on Astro) that answers the adaptive router's questions with plain rules instead of Jev; see `docs/FABRIC-SETUP.md` section 8c |
 | `scripts/` | seed data, tool dump, MCP probe |
 | `docs/` | Fabric setup guide, webhook contract, plan |
 | `results/` | saved harness runs |

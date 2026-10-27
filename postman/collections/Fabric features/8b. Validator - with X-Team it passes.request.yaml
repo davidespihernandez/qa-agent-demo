@@ -3,10 +3,10 @@ description: "Same request with X-Team: payments. Expect 200."
 url: "{{fabricUrl}}/anthropic-validated/v1/messages"
 method: POST
 headers:
-  Content-Type: "application/json"
-  anthropic-version: "2023-06-01"
+  Content-Type: application/json
+  anthropic-version: 2023-06-01
   fg-api-key: "{{fabricKey}}"
-  X-Team: "payments"
+  X-Team: payments
 body:
   type: json
   content: |-
@@ -22,7 +22,7 @@ body:
     }
 scripts:
   - type: afterResponse
-    code: |-
-      pm.test('HTTP 200', () => pm.response.to.have.status(200));
+    code: pm.test('HTTP 200', () => pm.response.to.have.status(200));
     language: text/javascript
+examples: .resources/8b. Validator - with X-Team it passes.resources/examples
 order: 8100
