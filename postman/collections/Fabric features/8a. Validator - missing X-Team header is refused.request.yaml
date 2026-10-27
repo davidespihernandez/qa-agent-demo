@@ -1,12 +1,11 @@
 $kind: http-request
-description: "Same request with X-Team: payments. Expect 200."
+description: "Route anthropic-validated has the validator plugin: every request must carry an X-Team header, so each call can be charged to a team. Without it Fabric answers 422."
 url: "{{fabricUrl}}/anthropic-validated/v1/messages"
 method: POST
 headers:
   Content-Type: "application/json"
   anthropic-version: "2023-06-01"
   fg-api-key: "{{fabricKey}}"
-  X-Team: "payments"
 body:
   type: json
   content: |-
@@ -23,6 +22,6 @@ body:
 scripts:
   - type: afterResponse
     code: |-
-      pm.test('HTTP 200', () => pm.response.to.have.status(200));
+      pm.test('HTTP 422', () => pm.response.to.have.status(422));
     language: text/javascript
-order: 9100
+order: 8000

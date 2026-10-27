@@ -3,11 +3,11 @@ description: "LLM routes read the key from fg-api-key only; Authorization: Beare
 url: "{{fabricUrl}}/anthropic/v1/models"
 method: GET
 headers:
-  anthropic-version: "2023-06-01"
-  Authorization: "Bearer {{fabricKey}}"
+  anthropic-version: 2023-06-01
+  Authorization: Bearer {{fabricKey}}
 scripts:
   - type: afterResponse
-    code: |-
-      pm.test('HTTP 401', () => pm.response.to.have.status(401));
+    code: pm.test('HTTP 401', () => pm.response.to.have.status(401));
     language: text/javascript
+examples: .resources/1c. Entry point - Bearer is not accepted on LLM routes.resources/examples
 order: 1200

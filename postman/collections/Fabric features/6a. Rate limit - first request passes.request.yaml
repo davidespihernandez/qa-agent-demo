@@ -1,6 +1,6 @@
 $kind: http-request
-description: "Route anthropic-validated has the validator plugin: every request must carry an X-Team header, so each call can be charged to a team. Without it Fabric answers 422."
-url: "{{fabricUrl}}/anthropic-validated/v1/messages"
+description: "Route anthropic-ratelimit has the rate-limit plugin: 1 request per 60 s, counted per consumer (key). The first call is served. If you get 429 here, wait a minute: the window is rolling. Tested 2026-10-21: calls 2+ get 429 (the plugin took a few seconds to apply after saving)."
+url: "{{fabricUrl}}{{rateLimitRoute}}/v1/messages"
 method: POST
 headers:
   Content-Type: "application/json"
@@ -22,6 +22,6 @@ body:
 scripts:
   - type: afterResponse
     code: |-
-      pm.test('HTTP 422', () => pm.response.to.have.status(422));
+      pm.test('HTTP 200', () => pm.response.to.have.status(200));
     language: text/javascript
-order: 9000
+order: 6000

@@ -3,8 +3,8 @@ description: "Route anthropic-economy has a Transformer plugin (body_set model =
 url: "{{fabricUrl}}/anthropic-economy/v1/messages"
 method: POST
 headers:
-  Content-Type: "application/json"
-  anthropic-version: "2023-06-01"
+  Content-Type: application/json
+  anthropic-version: 2023-06-01
   fg-api-key: "{{fabricKey}}"
 body:
   type: json
@@ -26,4 +26,5 @@ scripts:
       pm.test("HTTP 200", () => pm.response.to.have.status(200));
       pm.test("Served by Haiku", () => pm.expect(pm.response.text()).to.include("claude-haiku-4-5"));
     language: text/javascript
+examples: .resources/2b. Transformer - streaming also works.resources/examples
 order: 2150

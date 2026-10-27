@@ -3,8 +3,8 @@ description: "The same prompt on three routes. This one is the baseline: Sonnet 
 url: "{{fabricUrl}}/anthropic/v1/messages"
 method: POST
 headers:
-  Content-Type: "application/json"
-  anthropic-version: "2023-06-01"
+  Content-Type: application/json
+  anthropic-version: 2023-06-01
   fg-api-key: "{{fabricKey}}"
 body:
   type: json
@@ -29,4 +29,5 @@ scripts:
       pm.collectionVariables.set("cost_anthropic", JSON.stringify({ route: "anthropic", model: r.model, inTok: u.input_tokens, outTok: u.output_tokens, cost }));
       pm.test("HTTP 200", () => pm.response.to.have.status(200));
     language: text/javascript
+examples: .resources/5a. Cost - same prompt, anthropic route (Sonnet 4.5).resources/examples
 order: 5000

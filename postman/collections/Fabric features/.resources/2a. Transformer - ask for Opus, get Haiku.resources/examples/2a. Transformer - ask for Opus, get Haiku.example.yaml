@@ -1,0 +1,86 @@
+$kind: http-example
+request:
+  url: "{{fabricUrl}}/anthropic-economy/v1/messages"
+  method: POST
+  headers:
+    Content-Type: application/json
+    anthropic-version: 2023-06-01
+    fg-api-key: "{{fabricKey}}"
+  body:
+    type: json
+    content: |-
+      {
+        "model": "claude-opus-5-5",
+        "max_tokens": 50,
+        "messages": [{ "role": "user", "content": "Say hi" }]
+      }
+response:
+  statusCode: 200
+  statusText: ""
+  headers:
+    :status: "200"
+    date: Mon, 26 Oct 2026 11:35:54 GMT
+    content-type: application/json
+    anthropic-organization-id: 425d503d-800a-424b-afc0-d75d07d50d14
+    anthropic-ratelimit-input-tokens-limit: "10000000"
+    anthropic-ratelimit-input-tokens-remaining: "10000000"
+    anthropic-ratelimit-input-tokens-reset: 2026-10-26T11:35:54Z
+    anthropic-ratelimit-output-tokens-limit: "2000000"
+    anthropic-ratelimit-output-tokens-remaining: "2000000"
+    anthropic-ratelimit-output-tokens-reset: 2026-10-26T11:35:54Z
+    anthropic-ratelimit-requests-limit: "20000"
+    anthropic-ratelimit-requests-remaining: "19999"
+    anthropic-ratelimit-requests-reset: 2026-10-26T11:35:54Z
+    anthropic-ratelimit-tokens-limit: "12000000"
+    anthropic-ratelimit-tokens-remaining: "12000000"
+    anthropic-ratelimit-tokens-reset: 2026-10-26T11:35:54Z
+    anthropic-workspace-id: wrkspc_01NQZMUwcnxUkrMPyzyCLsSz
+    cf-cache-status: DYNAMIC
+    x-envoy-upstream-service-time: "713"
+    content-security-policy: default-src 'none'; frame-ancestors 'none'
+    request-id: req_011CgQnAsr69jeL985k8vYLq
+    server: cloudflare
+    server-timing: x-originResponse;dur=615
+    strict-transport-security: max-age=31536000; includeSubDomains; preload
+    traceresponse: 00-14bcd7566b86a7ed48296884dc4352bb-b05fd152a7cf9199-01
+    vary: Accept-Encoding
+    x-request-id: 699a98dc-080e-44db-a43f-482192258fa7
+    x-robots-tag: none
+    nel: '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+    report-to: '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=6CpC4iSasbMjKTAOkj3IPO%2F%2FDrCounekYfIfOwjb41TAouWjrW0owaY5xb%2Be9DkIdiSAAPb4fVLj6jHhDTR5JTVPb8kc1%2FUtpl5VpxfS91G1le%2Fljl%2BJQLkmfcLWVTjlFR6pOp5QuF0ix1E0JSx9LJWwsw9FLPLy1UB%2BXQs%3D"}]}'
+    content-encoding: br
+    cf-ray: a5092900e85a014a-MAD
+  body:
+    type: json
+    content: |-
+      {
+        "model": "claude-haiku-4-5-20251001",
+        "id": "msg_011CgQnAtF9bg2ia3q6FYZHs",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "Hi! 👋 How's it going?"
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 9,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 14,
+          "service_tier": "standard",
+          "inference_geo": "not_available",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      }
+order: 1000

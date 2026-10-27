@@ -4,7 +4,7 @@ url: "{{fabricUrl}}/anthropic-adaptive/v1/messages"
 method: POST
 headers:
   Content-Type: application/json
-  anthropic-version: "2023-06-01"
+  anthropic-version: 2023-06-01
   fg-api-key: "{{fabricKey}}"
 body:
   type: json
@@ -14,9 +14,9 @@ body:
       "max_tokens": 20,
       "messages": [{ "role": "user", "content": "Say hi" }]
     }
+examples: .resources/4a. Adaptive router - simple prompt goes to Haiku.resources/examples
 order: 4000
 scripts:
   - type: afterResponse
-    code: |-
-      pm.test('HTTP 200', () => pm.response.to.have.status(200));
+    code: pm.test('HTTP 200', () => pm.response.to.have.status(200));
     language: text/javascript

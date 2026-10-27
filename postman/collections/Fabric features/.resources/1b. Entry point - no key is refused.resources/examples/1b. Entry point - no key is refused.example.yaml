@@ -1,0 +1,26 @@
+$kind: http-example
+request:
+  url: "{{fabricUrl}}/anthropic/v1/models"
+  method: GET
+  headers:
+    anthropic-version: 2023-06-01
+response:
+  statusCode: 401
+  statusText: ""
+  headers:
+    :status: "401"
+    date: Mon, 26 Oct 2026 11:36:12 GMT
+    content-type: text/plain; charset=utf-8
+    content-length: "13"
+    x-request-id: 5cf4e3a1-2006-4e45-bb8c-dd4319ea629d
+    x-envoy-upstream-service-time: "5"
+    cf-cache-status: DYNAMIC
+    nel: '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+    report-to: '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=CwiRs3xyMBbO8D1b5Mw4j0xI5PTWgNZB4oNb0Y5rhRFNwkuR5WVrKczchbSJS4UipB23Bc5LadB3bJ2dqlWpBJ4VqpX5EEm97dd19VRPNP9n7NH%2BtCsilS3D%2BkXgcizS2Alzrw%2BUxX0gT18hET8RjRuplYlOB6qoCjUV%2BAE%3D"}]}'
+    server: cloudflare
+    cf-ray: a50929745d48014a-MAD
+  body:
+    type: text
+    content: |
+      Unauthorized
+order: 1000

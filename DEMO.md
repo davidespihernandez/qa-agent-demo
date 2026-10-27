@@ -39,21 +39,20 @@ provider), *Before Fabric*, *With Fabric*, *Fabric features and plugins*.
    | Show | Request | What Fabric does |
    |---|---|---|
    | One way in | 1a-1d | valid key 200; no key and `Bearer` both 401 (LLM routes read `fg-api-key` only); the Orders API behind the same key |
-   | Change the model for everyone | 2a-2c | the Transformer on `anthropic-economy` rewrites any requested model to Haiku 4.5, streaming too |
+   | Change the model for everyone | 2a-2b | the Transformer on `anthropic-economy` rewrites any requested model to Haiku 4.5, streaming too |
    | Model allowlist | 3a, 3b | `anthropic-select`: Haiku passes, Opus gets 400 |
-   | Pick the model by prompt | 4a-4c | adaptive router: "Say hi" goes to Haiku, the review task to Opus |
+   | Pick the model by prompt | 4a-4b | adaptive router: "Say hi" goes to Haiku, the review task to Opus |
    | Cost side by side | 5a-5c | same prompt on Sonnet and Haiku, Visualize shows the saving (about 67%) |
-   | Find it afterwards | 6 | search `FABRIC-DEMO-123` in Traces: prompt, tokens, cost, who called |
-   | Request limit | 7a, 7b | `anthropic-ratelimit`: 1 request per minute per key, then 429 |
-   | Token budget | 8a, 8b | `anthropic-tokenlimit`: 200 tokens per minute, then 429 "Token budget exhausted" |
-   | Required header | 9a, 9b | `anthropic-validated`: no `X-Team` gets 422, with it 200 (chargeback by team) |
-   | Redact PII | 10a, 10b | `anthropic-pii`: the model sees `[EMAIL]` and `[CREDIT_CARD]` instead of the real values |
-   | Survive an outage | 11a, 11b | `anthropic-fallback`: the first provider (bad key) returns 401, the router moves to the second, the caller gets 200 |
+   | Request limit | 6a, 6b | `anthropic-ratelimit`: 1 request per minute per key, then 429 |
+   | Token budget | 7a, 7b | `anthropic-tokenlimit`: 200 tokens per minute, then 429 "Token budget exhausted" |
+   | Required header | 8a, 8b | `anthropic-validated`: no `X-Team` gets 422, with it 200 (chargeback by team) |
+   | Redact PII | 9a, 9b | `anthropic-pii`: the model sees `[EMAIL]` and `[CREDIT_CARD]` instead of the real values |
+   | Survive an outage | 10a, 10b | `anthropic-fallback`: the first provider (bad key) returns 401, the router moves to the second, the caller gets 200 |
 
-   Tips: wait a minute between demos of 7 and 8 (rolling windows); send 7b by hand a few seconds after 7a (the counter
-   is not instant, two calls one second apart can both pass); for PII, the model refuses to repeat card numbers, so
-   10a/10b ask about the domain and the last four digits instead. Plugins can take seconds, sometimes minutes, to apply
-   after saving. How each route is built: `docs/FABRIC-SETUP.md`, section 8b.
+   Tips: wait a minute between demos of 6 and 7 (rolling windows); send 6b by hand and repeat it until the 429 shows (the
+   counter is not exact: 6a and 6b can both pass, the third call was the one refused); for PII, the model refuses to repeat card numbers, so
+   9a/9b ask about the domain and the last four digits instead. Plugins can take seconds, sometimes minutes, to apply
+   after saving. How each route is built: `docs/FABRIC-SETUP.md`, section 7b.
 3. **Say it:** none of this needed an agent. Next we build one, and it will only hold a gateway key.
 
 ## Act 2: Astro, build and run the agent (15 min)

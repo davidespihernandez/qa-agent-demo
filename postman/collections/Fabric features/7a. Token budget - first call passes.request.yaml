@@ -3,8 +3,8 @@ description: "Route anthropic-tokenlimit has the llm-rate-limit plugin: a budget
 url: "{{fabricUrl}}/anthropic-tokenlimit/v1/messages"
 method: POST
 headers:
-  Content-Type: "application/json"
-  anthropic-version: "2023-06-01"
+  Content-Type: application/json
+  anthropic-version: 2023-06-01
   fg-api-key: "{{fabricKey}}"
 body:
   type: json
@@ -21,7 +21,7 @@ body:
     }
 scripts:
   - type: afterResponse
-    code: |-
-      pm.test('HTTP 200', () => pm.response.to.have.status(200));
+    code: pm.test('HTTP 200', () => pm.response.to.have.status(200));
     language: text/javascript
-order: 8000
+examples: .resources/7a. Token budget - first call passes.resources/examples
+order: 7000

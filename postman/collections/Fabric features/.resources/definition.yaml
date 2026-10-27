@@ -1,8 +1,5 @@
 $kind: collection
-description: >-
-  Fabric features, with no agent involved: one entry point and one gateway key, model control with the Transformer plugin, a model allowlist,
-  the adaptive model router, cost side by side, traces, and rate limiting. Set fabricKey (a Fabric consumer key) and run the requests in order.
-  Each request has a test, so the Collection Runner shows what Fabric did. MCP route and tool control will be added once the plugin is available.
+description: "Fabric features, with no agent involved: one entry point and one gateway key, model control with the Transformer plugin, a model allowlist, the adaptive model router, cost side by side, traces, and rate limiting. Set fabricKey (a Fabric consumer key) and run the requests in order. Each request has a test, so the Collection Runner shows what Fabric did. MCP route and tool control will be added once the plugin is available."
 variables:
   fabricUrl: https://david-esp-s-fabric-team.dp.fabricgateway.ai
   fabricKey: ""

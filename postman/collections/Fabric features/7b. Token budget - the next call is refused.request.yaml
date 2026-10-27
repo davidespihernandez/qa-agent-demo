@@ -1,10 +1,10 @@
 $kind: http-request
-description: "Right after 8a. The budget is spent, so Fabric answers 429 \"Token budget exhausted\" with retry_after, and nothing reaches Anthropic. A cap on spend, not just on request count."
+description: Right after 7a. The budget is spent, so Fabric answers 429 "Token budget exhausted" with retry_after, and nothing reaches Anthropic. A cap on spend, not just on request count.
 url: "{{fabricUrl}}/anthropic-tokenlimit/v1/messages"
 method: POST
 headers:
-  Content-Type: "application/json"
-  anthropic-version: "2023-06-01"
+  Content-Type: application/json
+  anthropic-version: 2023-06-01
   fg-api-key: "{{fabricKey}}"
 body:
   type: json
@@ -25,4 +25,5 @@ scripts:
       pm.test("HTTP 429", () => pm.response.to.have.status(429));
       pm.test("Says the token budget is exhausted", () => pm.expect(pm.response.text()).to.include("Token budget exhausted"));
     language: text/javascript
-order: 8100
+examples: .resources/7b. Token budget - the next call is refused.resources/examples
+order: 7100

@@ -25,4 +25,4 @@ scripts:
       pm.test("HTTP 200", () => pm.response.to.have.status(200));
       pm.test("The real email never reached the model", () => pm.expect(pm.response.text()).to.not.include("example.com"));
     language: text/javascript
-order: 10100
+order: 9100

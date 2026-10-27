@@ -1,6 +1,6 @@
 $kind: http-request
-description: "Send it, then open Fabric > Traces and search for FABRIC-DEMO-123. The trace shows route, model, tokens, estimated cost, latency, the full prompt and the response, and which key made the call."
-url: "{{fabricUrl}}/anthropic/v1/messages"
+description: "Route anthropic-fallback has the llm-router plugin in fallback mode: it tries anthropic-broken first, gets 401 and moves to anthropic. The caller gets a 200 and never sees the failure. Open the trace to see both attempts."
+url: "{{fabricUrl}}/anthropic-fallback/v1/messages"
 method: POST
 headers:
   Content-Type: "application/json"
@@ -11,11 +11,11 @@ body:
   content: |-
     {
       "model": "claude-haiku-4-5-20251001",
-      "max_tokens": 150,
+      "max_tokens": 40,
       "messages": [
         {
           "role": "user",
-          "content": "FABRIC-DEMO-123: name three benefits of an API gateway, one line each."
+          "content": "Say hi"
         }
       ]
     }
@@ -24,4 +24,4 @@ scripts:
     code: |-
       pm.test('HTTP 200', () => pm.response.to.have.status(200));
     language: text/javascript
-order: 6000
+order: 10100

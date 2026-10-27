@@ -3,8 +3,8 @@ description: "Same route, a model that is not in the allowlist. Fabric answers 4
 url: "{{fabricUrl}}/anthropic-select/v1/messages"
 method: POST
 headers:
-  Content-Type: "application/json"
-  anthropic-version: "2023-06-01"
+  Content-Type: application/json
+  anthropic-version: 2023-06-01
   fg-api-key: "{{fabricKey}}"
 body:
   type: json
@@ -21,7 +21,7 @@ body:
     }
 scripts:
   - type: afterResponse
-    code: |-
-      pm.test('HTTP 400', () => pm.response.to.have.status(400));
+    code: pm.test('HTTP 400', () => pm.response.to.have.status(400));
     language: text/javascript
+examples: .resources/3b. Allowlist - Opus is refused.resources/examples
 order: 3100

@@ -1,12 +1,12 @@
 $kind: http-request
-description: "Same call without a key. Fabric refuses it before it reaches Anthropic. Expect 401."
+description: Same call without a key. Fabric refuses it before it reaches Anthropic. Expect 401.
 url: "{{fabricUrl}}/anthropic/v1/models"
 method: GET
 headers:
-  anthropic-version: "2023-06-01"
+  anthropic-version: 2023-06-01
 scripts:
   - type: afterResponse
-    code: |-
-      pm.test('HTTP 401', () => pm.response.to.have.status(401));
+    code: pm.test('HTTP 401', () => pm.response.to.have.status(401));
     language: text/javascript
+examples: .resources/1b. Entry point - no key is refused.resources/examples
 order: 1100

@@ -1,10 +1,10 @@
 $kind: http-request
-description: "Same as R2 with the full task wording (rules included). Response model is claude-opus-5-5. In every agent run through this route, every call went to Opus 5.5 (about 23.6k tokens in, 1.7k out per review). We never saw Sonnet, only Haiku or Opus."
+description: The full task wording, with the rules included. Response model is claude-opus-5-5. In every agent run through this route, every call went to Opus 5.5 (about 23.6k tokens in, 1.7k out per review). We never saw Sonnet, only Haiku or Opus.
 url: "{{fabricUrl}}/anthropic-adaptive/v1/messages"
 method: POST
 headers:
   Content-Type: application/json
-  anthropic-version: "2023-06-01"
+  anthropic-version: 2023-06-01
   fg-api-key: "{{fabricKey}}"
 body:
   type: json
@@ -14,9 +14,9 @@ body:
       "max_tokens": 20,
       "messages": [{ "role": "user", "content": "Review all orders for fraud. Flag orders over 10,000, orders from unknown customers, and customers with 3 or more identical orders. Report each finding." }]
     }
-order: 4200
+examples: .resources/4b. Adaptive router - full fraud task goes to Opus.resources/examples
+order: 4100
 scripts:
   - type: afterResponse
-    code: |-
-      pm.test('HTTP 200', () => pm.response.to.have.status(200));
+    code: pm.test('HTTP 200', () => pm.response.to.have.status(200));
     language: text/javascript

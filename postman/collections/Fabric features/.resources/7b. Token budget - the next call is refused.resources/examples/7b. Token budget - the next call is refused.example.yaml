@@ -1,0 +1,48 @@
+$kind: http-example
+request:
+  url: "{{fabricUrl}}/anthropic-tokenlimit/v1/messages"
+  method: POST
+  headers:
+    Content-Type: application/json
+    anthropic-version: 2023-06-01
+    fg-api-key: "{{fabricKey}}"
+  body:
+    type: json
+    content: |-
+      {
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 300,
+        "messages": [
+          {
+            "role": "user",
+            "content": "Write about 150 words on why gateways help teams."
+          }
+        ]
+      }
+response:
+  statusCode: 429
+  statusText: ""
+  headers:
+    :status: "429"
+    date: Tue, 27 Oct 2026 07:43:12 GMT
+    content-type: application/json
+    content-length: "92"
+    retry-after: "71"
+    x-request-id: 8b17cbe4-1af4-4300-aad1-9389049a0e87
+    x-envoy-upstream-service-time: "50"
+    cf-cache-status: DYNAMIC
+    nel: '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+    report-to: '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=IiD7scnuo7K2YBZhQxijKrWSSfGSJsXAtY4aVnYd0Vk3%2FxnS2OM4kd0wviaa1xJZ2ApvWKWfOJAxTLlIz3Awntkwiw9JVJFXtlLdvADF%2BdqQPnK4%2FPiLr9REqLO5ma5qvtRA4gLgPdFJWSY%2BFvBgi3Sy4B5tMWPApyoWIY4%3D"}]}'
+    server: cloudflare
+    cf-ray: a51011843befffe0-MAD
+  body:
+    type: json
+    content: |-
+      {
+        "error": {
+          "type": "rate_limit_exceeded",
+          "message": "Token budget exhausted",
+          "retry_after": 71
+        }
+      }
+order: 1000

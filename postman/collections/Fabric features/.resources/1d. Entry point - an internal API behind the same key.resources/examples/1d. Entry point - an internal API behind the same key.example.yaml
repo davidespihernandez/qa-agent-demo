@@ -1,0 +1,127 @@
+$kind: http-example
+request:
+  url: "{{fabricUrl}}/api/orders"
+  method: GET
+  headers:
+    fg-api-key: "{{fabricKey}}"
+response:
+  statusCode: 200
+  statusText: ""
+  headers:
+    :status: "200"
+    date: Mon, 26 Oct 2026 11:36:21 GMT
+    content-type: application/json; charset=utf-8
+    access-control-allow-headers: content-type, authorization, x-api-key
+    access-control-allow-methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+    access-control-allow-origin: "*"
+    etag: W/"764-lIWkuk3FmP1uVHZCCO2pV7ncwNg"
+    via: 1.1 Caddy
+    x-powered-by: Express
+    x-request-id: 6d1d77d2-3ba9-4f68-bbe3-f97cf731f27c
+    x-envoy-upstream-service-time: "351"
+    cf-cache-status: DYNAMIC
+    nel: '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+    report-to: '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=GsSCqEx7UaeJvoVHcGqCCAxapFTTbiSlv4gx%2FTm3bz0oQszGtJU%2FrSrRNr172rJAR6Vkf78%2BbmNr%2BtjniDzgIAbAV8TtdnxMUuLyBpUcR0bsB8ybBNXzdMMUzEMTJwanEqVHfY%2BDP7zotvI9DTsgl6aEkoqc6dlNJ3N393Q%3D"}]}'
+    content-encoding: br
+    server: cloudflare
+    cf-ray: a50929aa6bcc014a-MAD
+  body:
+    type: json
+    content: |-
+      {
+        "data": [
+          {
+            "id": "ord-001",
+            "customerId": "usr-001",
+            "status": "shipped",
+            "total": 49.99,
+            "currency": "USD"
+          },
+          {
+            "id": "ord-002",
+            "customerId": "usr-002",
+            "status": "pending",
+            "total": 129.5,
+            "currency": "USD"
+          },
+          {
+            "id": "ord-078cadff",
+            "customerId": "usr-002",
+            "status": "pending",
+            "total": 99.5,
+            "currency": "USD"
+          },
+          {
+            "id": "ord-11651313",
+            "customerId": "usr-002",
+            "status": "pending",
+            "total": 99.5,
+            "currency": "USD"
+          },
+          {
+            "id": "ord-41eab972",
+            "customerId": "usr-001",
+            "status": "pending",
+            "total": 120,
+            "currency": "USD"
+          },
+          {
+            "id": "ord-1a6a1f2b",
+            "customerId": "usr-002",
+            "status": "pending",
+            "total": 75.25,
+            "currency": "USD"
+          },
+          {
+            "id": "ord-0c23c25a",
+            "customerId": "usr-003",
+            "status": "pending",
+            "total": 310,
+            "currency": "USD"
+          },
+          {
+            "id": "ord-56e3c6e4",
+            "customerId": "usr-003",
+            "status": "pending",
+            "total": 10000,
+            "currency": "USD"
+          },
+          {
+            "id": "ord-f2770a43",
+            "customerId": "usr-001",
+            "status": "pending",
+            "total": 12500,
+            "currency": "USD"
+          },
+          {
+            "id": "ord-7959805d",
+            "customerId": "usr-ghost",
+            "status": "pending",
+            "total": 80,
+            "currency": "USD"
+          },
+          {
+            "id": "ord-3be90dd0",
+            "customerId": "usr-001",
+            "status": "pending",
+            "total": 42,
+            "currency": "USD"
+          },
+          {
+            "id": "ord-d0aefc1d",
+            "customerId": "usr-001",
+            "status": "pending",
+            "total": 42,
+            "currency": "USD"
+          },
+          {
+            "id": "ord-e1829d29",
+            "customerId": "usr-001",
+            "status": "pending",
+            "total": 42,
+            "currency": "USD"
+          }
+        ],
+        "count": 13
+      }
+order: 1000

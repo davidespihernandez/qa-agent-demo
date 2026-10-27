@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=https://astropods.com/schema/package.json
+spec: blueprint/v1
+name: decision-service
+
+agent:
+  build:
+    context: .
+    dockerfile: Dockerfile
+  # Plain HTTP service on port 80: Fabric's adaptive-model-router calls it as its decision connection.
+  interfaces:
+    frontend: true
+  inputs:
+    - name: DEBUG_KEY
+      datatype: string
+      secret: true
+      description: Required in the x-debug-key header of GET /debug/requests (the last 50 requests the plugin sent)
+      optional: true

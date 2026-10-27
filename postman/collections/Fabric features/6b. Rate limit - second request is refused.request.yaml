@@ -1,5 +1,5 @@
 $kind: http-request
-description: "Route anthropic-ratelimit has the rate-limit plugin: 1 request per 60 s, counted per consumer (key). The first call is served. If you get 429 here, wait a minute: the window is rolling. Tested 2026-10-21: calls 2+ get 429 (the plugin took a few seconds to apply after saving)."
+description: "Send it right after 6a. Fabric answers 429 and the call never reaches Anthropic. Wait a minute and it passes again. The counter is not exact: with a limit of 1 per minute, the second call has passed in some runs (once the first two both passed and the third got the 429). In a live demo, send 6b again until it is refused."
 url: "{{fabricUrl}}{{rateLimitRoute}}/v1/messages"
 method: POST
 headers:
@@ -22,6 +22,6 @@ body:
 scripts:
   - type: afterResponse
     code: |-
-      pm.test('HTTP 200', () => pm.response.to.have.status(200));
+      pm.test('HTTP 429', () => pm.response.to.have.status(429));
     language: text/javascript
-order: 7000
+order: 6100

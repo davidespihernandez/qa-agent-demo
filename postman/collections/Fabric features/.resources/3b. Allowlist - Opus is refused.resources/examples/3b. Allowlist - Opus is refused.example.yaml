@@ -1,0 +1,47 @@
+$kind: http-example
+request:
+  url: "{{fabricUrl}}/anthropic-select/v1/messages"
+  method: POST
+  headers:
+    Content-Type: application/json
+    anthropic-version: 2023-06-01
+    fg-api-key: "{{fabricKey}}"
+  body:
+    type: json
+    content: |-
+      {
+        "model": "claude-opus-4-5",
+        "max_tokens": 40,
+        "messages": [
+          {
+            "role": "user",
+            "content": "Say hi"
+          }
+        ]
+      }
+response:
+  statusCode: 400
+  statusText: ""
+  headers:
+    :status: "400"
+    date: Mon, 26 Oct 2026 11:35:24 GMT
+    content-type: application/json
+    content-length: "145"
+    x-request-id: fb42a39f-d0ce-4efb-acd1-76235b2675d7
+    x-envoy-upstream-service-time: "48"
+    cf-cache-status: DYNAMIC
+    nel: '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+    report-to: '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=mPsBAau3CzQal7FY0PyQDK5VOgG%2BhvvA93Zy91c9Z2d453WPeEUWm4GzDp6db8R%2BMBXAjmta8WvIAGrKB8ZdDR%2FmKK%2F1R%2Fo4j1EzTYYPo7Kh0xN7iHyN52UyKQEY%2BHgxZURoC7Kx%2F5Dl3UPd7IZT1K90znoFRqJ2%2BuHIfyM%3D"}]}'
+    server: cloudflare
+    cf-ray: a50928488dbf014a-MAD
+  body:
+    type: json
+    content: |-
+      {
+        "error": {
+          "message": "Model \"claude-opus-4-5\" is not allowed for service \"anthropic-select\".",
+          "type": "invalid_request_error"
+        },
+        "type": "error"
+      }
+order: 1000

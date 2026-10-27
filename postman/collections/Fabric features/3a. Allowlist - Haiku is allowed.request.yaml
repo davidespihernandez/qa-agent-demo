@@ -1,10 +1,10 @@
 $kind: http-request
-description: "Route anthropic-select only lets the service models in its allowlist through. Haiku and Sonnet pass."
+description: Route anthropic-select only lets the service models in its allowlist through. Haiku and Sonnet pass.
 url: "{{fabricUrl}}/anthropic-select/v1/messages"
 method: POST
 headers:
-  Content-Type: "application/json"
-  anthropic-version: "2023-06-01"
+  Content-Type: application/json
+  anthropic-version: 2023-06-01
   fg-api-key: "{{fabricKey}}"
 body:
   type: json
@@ -21,7 +21,7 @@ body:
     }
 scripts:
   - type: afterResponse
-    code: |-
-      pm.test('HTTP 200', () => pm.response.to.have.status(200));
+    code: pm.test('HTTP 200', () => pm.response.to.have.status(200));
     language: text/javascript
+examples: .resources/3a. Allowlist - Haiku is allowed.resources/examples
 order: 3000

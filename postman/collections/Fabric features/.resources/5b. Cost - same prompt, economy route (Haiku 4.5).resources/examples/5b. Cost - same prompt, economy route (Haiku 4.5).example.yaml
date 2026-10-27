@@ -1,0 +1,91 @@
+$kind: http-example
+request:
+  url: "{{fabricUrl}}/anthropic-economy/v1/messages"
+  method: POST
+  headers:
+    Content-Type: application/json
+    anthropic-version: 2023-06-01
+    fg-api-key: "{{fabricKey}}"
+  body:
+    type: json
+    content: |-
+      {
+        "model": "claude-sonnet-4-5",
+        "max_tokens": 300,
+        "messages": [
+          {
+            "role": "user",
+            "content": "Explain in about 150 words why an API gateway helps when many teams call the same LLM."
+          }
+        ]
+      }
+response:
+  statusCode: 200
+  statusText: ""
+  headers:
+    :status: "200"
+    date: Mon, 26 Oct 2026 11:59:00 GMT
+    content-type: application/json
+    anthropic-organization-id: 425d503d-800a-424b-afc0-d75d07d50d14
+    anthropic-ratelimit-input-tokens-limit: "10000000"
+    anthropic-ratelimit-input-tokens-remaining: "10000000"
+    anthropic-ratelimit-input-tokens-reset: 2026-10-26T11:58:57Z
+    anthropic-ratelimit-output-tokens-limit: "2000000"
+    anthropic-ratelimit-output-tokens-remaining: "2000000"
+    anthropic-ratelimit-output-tokens-reset: 2026-10-26T11:59:00Z
+    anthropic-ratelimit-requests-limit: "20000"
+    anthropic-ratelimit-requests-remaining: "19999"
+    anthropic-ratelimit-requests-reset: 2026-10-26T11:58:57Z
+    anthropic-ratelimit-tokens-limit: "12000000"
+    anthropic-ratelimit-tokens-remaining: "12000000"
+    anthropic-ratelimit-tokens-reset: 2026-10-26T11:58:57Z
+    anthropic-workspace-id: wrkspc_01NQZMUwcnxUkrMPyzyCLsSz
+    cf-cache-status: DYNAMIC
+    x-envoy-upstream-service-time: "2970"
+    content-security-policy: default-src 'none'; frame-ancestors 'none'
+    request-id: req_011CgQovsaKCuDjSfgho6u66
+    server: cloudflare
+    server-timing: x-originResponse;dur=2873
+    strict-transport-security: max-age=31536000; includeSubDomains; preload
+    traceresponse: 00-09060d9fb17523f13dc3d9a2a7947a6f-6caff9c19f3e6f29-01
+    vary: Accept-Encoding
+    x-request-id: ee2f629e-0a42-417d-89aa-c4f1e7a67d47
+    x-robots-tag: none
+    nel: '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+    report-to: '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=8x%2B1%2BGEE65op3DkY4jEd3ZvTPs9pe5yq1I8%2B3fwG3UBe2OtlxHa4arzyltqztrzkakw8oCDM6r30HhB9Qn5b2wWEOCl0p5QoCEXe8EzF1QRi8fgrJq%2F%2FLxRu3RZWQvGEND5eu4rHsWAcqEu8WFBSY5SI6zMKHD7wwrf0R74%3D"}]}'
+    content-encoding: br
+    cf-ray: a5094ac8bc6f014a-MAD
+  body:
+    type: json
+    content: |-
+      {
+        "model": "claude-haiku-4-5-20251001",
+        "id": "msg_011CgQovsuu5niWk3gNupQ3d",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "# Why an API Gateway Helps Multiple Teams Using the Same LLM\n\nAn API gateway acts as a centralized control point when many teams access a shared LLM, providing several critical benefits:\n\n**Rate Limiting & Quota Management**: The gateway distributes limited LLM capacity fairly across teams, preventing one team from monopolizing resources and degrading service for others.\n\n**Authentication & Authorization**: It ensures only authorized teams access the LLM and tracks usage by team for billing and accountability.\n\n**Request Standardization**: The gateway enforces consistent prompt formatting, model versions, and parameter settings across all teams, reducing conflicts and improving reliability.\n\n**Monitoring & Observability**: Centralized logging provides visibility into usage patterns, costs, and performance, helping identify bottlenecks or abuse.\n\n**Caching & Optimization**: The gateway can cache common queries, reducing redundant LLM calls and lowering costs while improving response times.\n\n**Version Management**: Teams can gradually migrate between model versions without coordinating directly, reducing deployment complexity.\n\nThis single point of management prevents chaos, ensures fair resource allocation, and gives the organization control over a valuable shared asset."
+          }
+        ],
+        "container": null,
+        "stop_reason": "end_turn",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 30,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 249,
+          "service_tier": "standard",
+          "inference_geo": "not_available",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      }
+order: 1000
