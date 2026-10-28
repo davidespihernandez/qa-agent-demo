@@ -4,6 +4,8 @@
 const PORT = Number(process.env.PORT ?? 80);
 const DEBUG_KEY = process.env.DEBUG_KEY ?? '';
 const seen: any[] = [];
+// Debug only: force individual answers ({tier, deep_reasoning, underspecified, blast_radius}) to see what the plugin reacts to. Reset with {}.
+let override: Record<string, any> = {};
 
 type Tier = 'fast' | 'balanced' | 'advanced' | 'reasoning';
 const REASONING_WORDS = ['prove', 'step by step', 'multi-step', 'trade-off', 'tradeoff', 'plan the'];
@@ -28,7 +30,7 @@ export function pickTier(state: any): Tier {
 }
 
 function answer(key: string, q: any, state: any) {
-  const tier = pickTier(state);
+  const tier: Tier = override.tier ?? pickTier(state);
   if (q?.type === 'choice') {
     const options = Object.keys(q.criteria ?? {});
     const choice = options.includes(tier) ? tier : options[0];
@@ -36,7 +38,7 @@ function answer(key: string, q: any, state: any) {
   }
   if (q?.type === 'score') {
     const points: string[] = Array.isArray(q.criteria) ? q.criteria : [];
-    const idx = Math.min({ fast: 0, balanced: 1, advanced: 2, reasoning: 2 }[tier], Math.max(points.length - 1, 0));
+    const idx = override[key] ?? Math.min({ fast: 0, balanced: 1, advanced: 2, reasoning: 2 }[tier], Math.max(points.length - 1, 0));
     return {
       type: 'score',
       score: idx,
@@ -46,6 +48,7 @@ function answer(key: string, q: any, state: any) {
     };
   }
   // yes/no questions: only deep_reasoning follows the tier, nothing else is ever "underspecified"
+  if (override[key] !== undefined) return { type: 'noul', noul: override[key] };
   const yes = key === 'deep_reasoning' ? (tier === 'reasoning' ? 0.95 : tier === 'advanced' ? 0.5 : 0.05) : 0.05;
   return { type: 'noul', noul: yes };
 }
@@ -55,6 +58,11 @@ Bun.serve({
   async fetch(req) {
     const url = new URL(req.url);
     if (url.pathname === '/health') return Response.json({ ok: true });
+    if (url.pathname === '/debug/override' && req.method === 'POST') {
+      if (DEBUG_KEY && req.headers.get('x-debug-key') !== DEBUG_KEY) return new Response('forbidden', { status: 403 });
+      override = await req.json();
+      return Response.json(override);
+    }
     if (url.pathname === '/debug/requests') {
       if (DEBUG_KEY && req.headers.get('x-debug-key') !== DEBUG_KEY) return new Response('forbidden', { status: 403 });
       return Response.json(seen);

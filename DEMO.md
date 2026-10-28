@@ -28,7 +28,7 @@ Orders, Users and Payments APIs (MCP tools next).
 ## Act 1: Fabric, the front door (15 to 20 min)
 
 Slides: divider *Postman Fabric Gateway*, *Following one request through Fabric* (agent, route, plugin, service,
-provider), *Before Fabric*, *With Fabric*, *Fabric features and plugins*.
+provider), *Before Fabric*, *With Fabric*, *Fabric features and plugins*, *How our own decision service decides* (the plugin asks four questions, our rules answer, the plugin picks the model; show it right after requests 4c-4e).
 
 1. **Concepts in 2 minutes** (while on *Following one request*): service (where traffic ends up), route (the address on the gateway),
    plugin (a rule on a route), credential (a secret in the vault).
@@ -58,7 +58,7 @@ provider), *Before Fabric*, *With Fabric*, *Fabric features and plugins*.
 
 ## Act 2: Astro, build and run the agent (15 min)
 
-Slides: divider *Astro*, *Astro turns an agent into a service*, *Five layers*, *Anatomy of the agent*, *The agent plugs into any system through a webhook*, *What we set up in Fabric*.
+Slides: divider *Astro*, *Astro turns an agent into a service*, *Five layers*, then one code slide per layer (*Dockerfile*, *astropods.yml*, *The adapter*), *Anatomy of the agent* and its code slides (*Brain*, *Hands*, *Instructions*, *Putting it together*), *The agent plugs into any system through a webhook*, *What we set up in Fabric*.
 
 1. **Brain, hands, instructions.** Open `agent/agent/fraud-agent.ts`:
    - **Brain:** the model. `astropods.yml` declares `models: anthropic`; `QA_MODEL` picks the model;
