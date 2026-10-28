@@ -4,7 +4,7 @@ url: "{{fabricUrl}}/anthropic-adaptive-rules/v1/messages"
 method: POST
 headers:
   Content-Type: application/json
-  anthropic-version: "2023-06-01"
+  anthropic-version: 2023-06-01
   fg-api-key: "{{fabricKey}}"
 body:
   type: json
@@ -19,6 +19,7 @@ body:
         }
       ]
     }
+examples: .resources/4c. Own decision service - simple prompt goes to Haiku.resources/examples
 order: 4200
 scripts:
   - type: afterResponse

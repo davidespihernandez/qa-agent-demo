@@ -1,0 +1,94 @@
+$kind: http-example
+request:
+  url: "{{fabricUrl}}/anthropic-adaptive-rules/v1/messages"
+  method: POST
+  headers:
+    Content-Type: application/json
+    anthropic-version: 2023-06-01
+    fg-api-key: "{{fabricKey}}"
+  body:
+    type: json
+    content: |-
+      {
+        "model": "claude-sonnet-4-5",
+        "max_tokens": 20,
+        "messages": [
+          {
+            "role": "user",
+            "content": "Review all orders for fraud and report the suspicious ones."
+          }
+        ]
+      }
+response:
+  statusCode: 200
+  statusText: ""
+  headers:
+    :status: "200"
+    date: Wed, 28 Oct 2026 09:13:00 GMT
+    content-type: application/json
+    anthropic-organization-id: 425d503d-800a-424b-afc0-d75d07d50d14
+    anthropic-ratelimit-input-tokens-limit: "10000000"
+    anthropic-ratelimit-input-tokens-remaining: "10000000"
+    anthropic-ratelimit-input-tokens-reset: 2026-10-28T09:13:00Z
+    anthropic-ratelimit-output-tokens-limit: "2000000"
+    anthropic-ratelimit-output-tokens-remaining: "2000000"
+    anthropic-ratelimit-output-tokens-reset: 2026-10-28T09:13:00Z
+    anthropic-ratelimit-requests-limit: "20000"
+    anthropic-ratelimit-requests-remaining: "19999"
+    anthropic-ratelimit-requests-reset: 2026-10-28T09:12:59Z
+    anthropic-ratelimit-tokens-limit: "12000000"
+    anthropic-ratelimit-tokens-remaining: "12000000"
+    anthropic-ratelimit-tokens-reset: 2026-10-28T09:13:00Z
+    anthropic-workspace-id: wrkspc_01NQZMUwcnxUkrMPyzyCLsSz
+    cf-cache-status: DYNAMIC
+    x-envoy-upstream-service-time: "1106"
+    content-security-policy: default-src 'none'; frame-ancestors 'none'
+    request-id: req_011CgUNtefDorc3RbZ1L3Pvw
+    server: cloudflare
+    server-timing: x-originResponse;dur=963
+    strict-transport-security: max-age=31536000; includeSubDomains; preload
+    traceresponse: 00-ec952a240787092a86ca13986f71920f-0ff90410b878a7eb-01
+    vary: Accept-Encoding
+    x-request-id: de971191-e435-443d-976c-f8d5468e05a2
+    x-robots-tag: none
+    nel: '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+    report-to: '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=KDZs3SSZRsREuN0vFMsnQ89gfdTu3R0Kt8FaFPQTHHVeA6WGQqEL9gOMyqS5VggJg8zVenTREsJlRl663UZVgOkr4Owc%2ByZ%2BvS3SbvlNGjuDRIgKNwoaXOfzfFev6IbtzJSMF3GoAEraO74xQ6wiQMWsCRHwtYqry37qI40%3D"}]}'
+    content-encoding: br
+    cf-ray: a518d26a3f5488be-MAD
+  body:
+    type: json
+    content: |-
+      {
+        "model": "claude-sonnet-5-5",
+        "id": "msg_011CgUNtf1ZSkmGf2pqznhZG",
+        "type": "message",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "I don't see any order data in our conversation yet. No files, tables"
+          }
+        ],
+        "container": null,
+        "stop_reason": "max_tokens",
+        "stop_sequence": null,
+        "stop_details": null,
+        "usage": {
+          "input_tokens": 27,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "cache_creation": {
+            "ephemeral_5m_input_tokens": 0,
+            "ephemeral_1h_input_tokens": 0
+          },
+          "output_tokens": 20,
+          "output_tokens_details": {
+            "thinking_tokens": 0
+          },
+          "service_tier": "standard",
+          "inference_geo": "global",
+          "speed": "standard"
+        },
+        "diagnostics": null
+      }
+order: 1000
