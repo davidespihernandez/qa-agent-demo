@@ -1,5 +1,5 @@
 $kind: http-request
-description: "Same agent, same task. The LLM and the APIs go through Fabric: the agent only holds a gateway key (fg-api-key), and Fabric adds the real credentials. Expect the same tokens and cost as A, plus traces, analytics and control in Fabric."
+description: "Scenario 1. Same as F, but the request asks for the \"cheap\" model (Haiku 4.5). The agent switches model per request, with no redeploy. Use \"expensive\" for Sonnet 4.5 or a full model id."
 url: "{{baseUrl}}/review"
 method: POST
 headers:
@@ -11,6 +11,7 @@ body:
   content: |-
     {
       "arm": "F",
+      "model": "cheap",
       "live": false
     }
 scripts:
@@ -19,7 +20,7 @@ scripts:
       // POST /review answers 202 at once; poll /runs/{id} until the review finishes (a review takes 20-60 s).
       const show = (r) => {
         pm.test('Agent flagged exactly the right orders', () => pm.expect(r.verdict).to.eql('pass'));
-        pm.collectionVariables.set('res_F', JSON.stringify({ arm: 'F', verdict: r.verdict, tools: r.toolCount, steps: r.steps,
+        pm.collectionVariables.set('res_F-cheap', JSON.stringify({ arm: 'F-cheap', verdict: r.verdict, tools: r.toolCount, steps: r.steps,
           inTok: r.usage && r.usage.inputTokens, outTok: r.usage && r.usage.outputTokens, cost: r.estimatedCostUsd, sec: Math.round(r.ms / 1000) }));
         let t = `<style>body{font-family:sans-serif;font-size:14px}td,th{padding:4px 10px;text-align:right}th:first-child,td:first-child{text-align:left}</style>
         <h3>Arm ${r.arm}: ${r.title}</h3><p>${r.llm}<br>${r.tools}</p>
@@ -49,4 +50,4 @@ scripts:
       });
       if (pm.response.code === 202) poll(60); else pm.test("Review accepted: " + (start.error || pm.response.code), () => pm.expect.fail());
     language: text/javascript
-order: 3000
+order: 5000

@@ -32,9 +32,9 @@ export const ARMS: Record<Arm, { title: string; llm: string; tools: string; env?
     env: 'LLM_BASE_URL_ECONOMY',
   },
   B: {
-    title: 'Through Fabric',
+    title: 'Fabric MCP route, all tools',
     llm: 'Fabric LLM route (the agent only holds a gateway key)',
-    tools: 'Fabric MCP route: bridge exposes all 21 operations',
+    tools: 'One Fabric MCP route that joins our Orders/Users/Payments MCP server (21 tools) and the GitHub MCP server (46 tools): the model gets all 67 definitions on every step',
     env: 'MCP_URL',
   },
   'B-ro': {
@@ -46,7 +46,7 @@ export const ARMS: Record<Arm, { title: string; llm: string; tools: string; env?
   C: {
     title: 'Fabric + Tool Search',
     llm: 'Fabric LLM route',
-    tools: 'Fabric MCP route with the Tool Search plugin: the model searches for tools instead of receiving all of them',
+    tools: 'The same 67-tool catalog behind the Tool Search plugin: the model sees 3 tools and searches for the rest',
     env: 'MCP_URL_SEARCH',
   },
   D: {

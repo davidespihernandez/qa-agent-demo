@@ -1,16 +1,15 @@
 /** Generates the Postman v3 (YAML) collection in postman/collections/ (run: bun postman/build-collection.ts). */
-import { mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 // [key, arm sent to the agent, request name, description, extra body fields]
 const arms: [string, string, string, string, object?][] = [
-  ['A', 'A', '1. A - Direct to Anthropic', 'The agent calls Anthropic and the APIs itself, with the real Anthropic key inside the agent. Nothing in between: the baseline (Sonnet 4.5).'],
-  ['F', 'F', '2. F - Through Fabric', 'Same agent, same task. The LLM and the APIs go through Fabric: the agent only holds a gateway key (fg-api-key), and Fabric adds the real credentials. Expect the same tokens and cost as A, plus traces, analytics and control in Fabric.'],
-  ['F-eco', 'F-eco', '3. F-eco - Fabric economy route', 'Same as F, but the agent calls the economy route, where a Transformer plugin rewrites the model to Haiku 4.5. No agent change. About 67% cheaper in our runs; Haiku passed 7 of 8.'],
-  ['F-cheap', 'F', '4. F + model "cheap" - choose the model per request', 'Same as F, but the request asks for the "cheap" model (Haiku 4.5). The agent switches model per request, with no redeploy. Use "expensive" for Sonnet 4.5 or a full model id.', { model: 'cheap' }],
-  ['B', 'B', '5. B - Fabric MCP route (optional)', 'Tools come from a Fabric MCP route instead of in-process calls: the bridge exposes all 21 operations. Needs MCP_URL on the agent.'],
-  ['B-ro', 'B-ro', '6. B-ro - MCP, read-only tools (optional)', 'Fabric exposes only the 8 GET operations to this agent. Fewer tool definitions per call, and it cannot write even if it wanted to. Needs MCP_URL_READONLY.'],
-  ['C', 'C', '7. C - MCP + Tool Search (optional)', 'Fabric hides the catalog behind a search tool; the model fetches only the tools it needs. Needs MCP_URL_SEARCH.'],
+  ['A', 'A', '1. Scenario 1 - A: direct to Anthropic (baseline)', 'Scenario 1 (21 tools). The agent calls Anthropic and the APIs itself, with the real Anthropic key inside the agent. Nothing in between: the baseline (Sonnet 4.5).'],
+  ['F', 'F', '2. Scenario 1 - F: through Fabric', 'Scenario 1. Same agent, same task. The LLM and the APIs go through Fabric: the agent only holds a gateway key (fg-api-key), and Fabric adds the real credentials. Same tokens and cost as A, plus traces, analytics and control in Fabric.'],
+  ['F-eco', 'F-eco', '3. Scenario 1 - F-eco: Fabric economy route (cheaper model)', 'Scenario 1. Same as F, but the agent calls the economy route, where a Transformer plugin rewrites the model to Haiku 4.5. No agent change. About 67% cheaper in our runs.'],
+  ['F-cheap', 'F', '4. Scenario 1 - F + model "cheap" (choose the model per request)', 'Scenario 1. Same as F, but the request asks for the "cheap" model (Haiku 4.5). The agent switches model per request, with no redeploy. Use "expensive" for Sonnet 4.5 or a full model id.', { model: 'cheap' }],
+  ['B', 'B', '5. Scenario 2 - B: all 67 tools sent to the model (baseline)', 'Scenario 2 (big catalog). The tools come from one Fabric MCP route that joins our Orders/Users/Payments server (21 tools) and the GitHub MCP server (46 tools). The model gets all 67 tool definitions on every step. Needs MCP_URL on the agent (route /mcp/orders-all).'],
+  ['C', 'C', '6. Scenario 2 - C: the same 67 tools with Tool Search', 'Scenario 2. Same catalog, but the route has the tool-search plugin: the model sees three tools (search_tool, get_tool, execute_tool) and fetches only the ones it needs. Needs MCP_URL_SEARCH (route /mcp/orders-all-search).'],
 ];
 
 const test = (arm: string, label = arm) => [
@@ -48,17 +47,7 @@ const test = (arm: string, label = arm) => [
   'if (pm.response.code === 202) poll(60); else pm.test("Review accepted: " + (start.error || pm.response.code), () => pm.expect.fail());',
 ];
 
-const compareTest = [
-  'const rows = ["A","F","F-eco","F-cheap","B","B-ro","C"].map(a => { try { return JSON.parse(pm.collectionVariables.get("res_" + a)); } catch (e) { return null; } }).filter(Boolean);',
-  'const base = rows.find(x => x.arm === "A");',
-  'const pct = (v, b) => b ? (v / b - 1) * 100 : null;',
-  'const fmt = v => v == null ? "" : (v > 0 ? "+" : "") + v.toFixed(0) + "%";',
-  'const d = x => fmt(base && base.inTok ? pct(x.inTok, base.inTok) : null);',
-  'const dc = x => x.arm === "A" ? "baseline" : fmt(base && base.cost && x.cost != null ? pct(x.cost, base.cost) : null);',
-  'const money = c => c == null ? "n/a" : "$" + c.toFixed(3);',
-  'const tr = rows.map(x => `<tr><td>${x.arm}</td><td>${x.verdict}</td><td>${x.tools}</td><td>${x.inTok}</td><td>${d(x)}</td><td>${x.outTok}</td><td>${money(x.cost)}</td><td><b>${dc(x)}</b></td><td>${x.sec}s</td></tr>`).join("");',
-  'pm.visualizer.set(`<style>body{font-family:sans-serif;font-size:14px}td,th{padding:4px 12px;text-align:right}th:first-child,td:first-child{text-align:left}</style><h3>Same agent, same task: what changed per arm</h3><table><tr><th>Arm</th><th>Verdict</th><th>Tools sent</th><th>Input tokens</th><th>vs A</th><th>Output</th><th>Est. cost</th><th>Cost vs A</th><th>Time</th></tr>${tr}</table>`);',
-];
+const compareTest = readFileSync(join(import.meta.dir, 'compare-script.js'), 'utf8').trimEnd().split('\n');
 
 const dir = join(import.meta.dir, 'collections', 'Fraud agent - arms');
 // Regenerate everything except the hand-written T* (Transformer) and R* (adaptive router) repro requests.
@@ -89,14 +78,14 @@ writeFileSync(
   [
     '$kind: collection',
     'description: >-',
-    '  Runs the same fraud-review agent through each path; only the arm changes. Run the arm requests in order',
-    '  (or use the Collection Runner), then open "Compare arms" and its Visualize tab. Dry run by default: the webhook is not called. baseUrl points at the Fabric route /agent (needs fabricKey); for a local server use http://localhost:8787 and leave fabricKey empty.',
+    '  Runs the same fraud-review agent through each path; only the arm changes. Two scenarios: (1) same 21 tools, what changes is Fabric and the model; (2) a 67-tool catalog, what changes is Tool Search. Run requests 1 to 6',
+    '  (or use the Collection Runner), then open request 7 (Compare) and its Visualize tab. Dry run by default: the webhook is not called. baseUrl points at the Fabric route /agent (needs fabricKey); for a local server use http://localhost:8787 and leave fabricKey empty.',
     'variables:',
     '  baseUrl: https://david-esp-s-fabric-team.dp.fabricgateway.ai/agent',
     '  ordersUrl: https://david-esp-s-fabric-team.dp.fabricgateway.ai/api',
     '  fabricKey: ""',
     '  demoKey: ""',
-    ...['A', 'F', 'F-eco', 'F-cheap', 'B', 'B-ro', 'C'].map((k) => `  res_${k}: ""`),
+    ...['A', 'F', 'F-eco', 'F-cheap', 'B', 'C'].map((k) => `  res_${k}: ""`),
   ].join('\n') + '\n',
 );
 
@@ -125,6 +114,6 @@ request(400, 'D4. Orders - new order from an unknown customer', 'POST', '/orders
 request(500, 'D5. Orders - repeated order (send it 3 times)', 'POST', '/orders', 'Send this three times: 3 identical orders from the same customer get flagged.', order('usr-003', 42), undefined, O);
 request(1000, '0. What does each arm change', 'GET', '/arms', 'Plain-English description of every arm and whether it is configured on this server.');
 arms.forEach(([key, arm, name, desc, extra], i) => request(2000 + i * 1000, name, 'POST', '/review', desc, { arm, ...extra, live: false }, test(key, key)));
-request(7000, '8. Compare arms', 'GET', '/arms', 'Open the Visualize tab: a table built from the runs above.', undefined, compareTest);
-request(8000, '9. LIVE - fire the Postman webhook', 'POST', '/review', 'Only for the show-and-tell. Sends one alert per fraudulent order to the Flow webhook (Idempotency-Key header).', { arm: 'F', live: true });
+request(8000, '7. Compare: cost per review, worst to best', 'GET', '/arms', 'Send requests 1 to 6 first, then open the Visualize tab: one table per scenario, sorted from the most to the least expensive arm, with the saving against the baseline. The tests fail if an arm gave a wrong answer or if a change does not save what it should.', undefined, compareTest);
+request(9000, '8. LIVE - fire the Postman webhook', 'POST', '/review', 'Only for the show-and-tell. Sends one alert per fraudulent order to the Flow webhook (Idempotency-Key header).', { arm: 'F', live: true });
 console.log('written', dir);
