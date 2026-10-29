@@ -1,10 +1,10 @@
 $kind: http-request
-description: "The Postman MCP server behind Fabric, route /mcp/postman, with no plugin. tools/list returns every tool with its full schema: about 233 tools and 400 KB, which an agent would send to the model on every step. The pre-request script opens an MCP session first."
-url: "{{fabricUrl}}/mcp/postman"
+description: "The GitHub MCP server behind Fabric, route /mcp/github, with no plugin. tools/list returns every tool with its full schema: 46 tools and about 50 KB, which an agent would send to the model on every step. The pre-request script opens an MCP session first."
+url: "{{fabricUrl}}/mcp/github"
 method: POST
 headers:
   Content-Type: application/json
-  Accept: "application/json, text/event-stream"
+  Accept: application/json, text/event-stream
   fg-api-key: "{{fabricKey}}"
   mcp-session-id: "{{mcpSession}}"
 body:
@@ -15,11 +15,12 @@ body:
       "id": 2,
       "method": "tools/list"
     }
+examples: .resources/11a. Tool Search - the full catalog (46 tools).resources/examples
 order: 11000
 scripts:
   - type: beforeRequest
     code: |-
-      const base = pm.variables.replaceIn('{{fabricUrl}}') + '/mcp/postman';
+      const base = pm.variables.replaceIn('{{fabricUrl}}') + '/mcp/github';
       pm.sendRequest({
         url: base, method: 'POST',
         header: { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream', 'fg-api-key': pm.variables.get('fabricKey') },
@@ -31,5 +32,5 @@ scripts:
       const tools = pm.response.json().result.tools;
       console.log('tools:', tools.length, '| response bytes:', pm.response.responseSize);
       pm.test('HTTP 200', () => pm.response.to.have.status(200));
-      pm.test('The whole catalog comes back (over 100 tools)', () => pm.expect(tools.length).to.be.above(100));
+      pm.test('The whole catalog comes back (over 30 tools)', () => pm.expect(tools.length).to.be.above(30));
     language: text/javascript

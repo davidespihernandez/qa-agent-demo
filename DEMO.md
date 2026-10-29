@@ -10,7 +10,7 @@ The agent reviews orders from the Orders/Users/Payments APIs and reports suspici
 ## Before you start
 
 - Orders API reachable (`GET /health`), Flow webhook URL in `FRAUD_WEBHOOK_URL`, Fabric key in `.env`.
-- Run `D1. Orders - RESET` in the Postman collection so the data is two clean orders.
+- Run `D1. RESET orders` in the Postman collection so the data is two clean orders.
 - Have a recorded run and screenshots ready as a fallback (agent runs are non-deterministic).
 
 ## Intro: the scenario (2 min)
@@ -28,7 +28,7 @@ Orders, Users and Payments APIs (MCP tools next).
 ## Act 1: Fabric, the front door (15 to 20 min)
 
 Slides: divider *Postman Fabric Gateway*, *Following one request through Fabric* (agent, route, plugin, service,
-provider), *Before Fabric*, *With Fabric*, *Fabric features and plugins*, *How our own decision service decides* (the plugin asks four questions, our rules answer, the plugin picks the model; show it right after requests 4c-4e).
+provider), *Before Fabric*, *With Fabric*, *Fabric features and plugins*, *How our own decision service decides* (the plugin asks four questions, our rules answer, the plugin picks the model; show it right after requests 4c-4e), *Tool Search: 233 tools become 3* (show it after requests 11a-11e).
 
 1. **Concepts in 2 minutes** (while on *Following one request*): service (where traffic ends up), route (the address on the gateway),
    plugin (a rule on a route), credential (a secret in the vault).
@@ -49,7 +49,7 @@ provider), *Before Fabric*, *With Fabric*, *Fabric features and plugins*, *How o
    | Required header | 8a, 8b | `anthropic-validated`: no `X-Team` gets 422, with it 200 (chargeback by team) |
    | Redact PII | 9a, 9b | `anthropic-pii`: the model sees `[EMAIL]` and `[CREDIT_CARD]` instead of the real values |
    | Survive an outage | 10a, 10b | `anthropic-fallback`: the first provider (bad key) returns 401, the router moves to the second, the caller gets 200 |
-   | Tool Search | 11a-11e | Postman MCP server behind Fabric: 233 tools (405 KB) on `/mcp/postman`, 3 search tools (5 KB) on `/mcp/postman-search`; then `search_tool`, `get_tool`, `execute_tool` (read-only). Setup: `docs/FABRIC-SETUP.md` 8d |
+   | Tool Search | 11a-11e | GitHub MCP server behind Fabric: 46 tools (50 KB, 19.5k tokens) on `/mcp/github`, 3 search tools (5 KB, 2.1k tokens) on `/mcp/github-search`; then `search_tool`, `get_tool`, `execute_tool` (read-only). Setup: `docs/FABRIC-SETUP.md` 8d |
 
    Tips: wait a minute between demos of 6 and 7 (rolling windows); send 6b by hand and repeat it until the 429 shows (the
    counter is not exact: 6a and 6b can both pass, the third call was the one refused); for PII, the model refuses to repeat card numbers, so
@@ -142,9 +142,9 @@ Slide: *Conclusions* (the plugins are all in the *Fabric features and plugins* t
 
    Fabric alone does not cut tokens. The saving is the model choice, and Fabric lets you enforce it.
    Tool Search on a small catalog costs more (C): 21 tools are only 6 KB and the three meta-tools are about 5 KB, and each
-   search adds a model call. It pays off on big catalogs: the Postman MCP server is 233 tools (405 KB) on `/mcp/postman` and
-   3 meta-tools (5 KB) on `/mcp/postman-search` (requests 11a-11e). A run with the agent on a 254-tool route (B-big) is still
-   to do: Fabric's route to Postman flapped between the full list and only a connect tool (reported).
+   search adds a model call. It pays off on big catalogs: the GitHub MCP server is 46 tools (19,502 tokens) on `/mcp/github` and
+   3 meta-tools (2,147 tokens, 89% fewer) on `/mcp/github-search` (requests 11a-11e). A run with the agent on a big
+   route (B-big, orders + GitHub) is still to do.
 2. **Coming up, each measured with the same oracle:**
    - Adaptive model router (`anthropic-adaptive` route): the plugin sends the request text to a decision service
      (Jev, pinned to `jev-1.13.0` with tuned thresholds) and maps the answer to a model. Tested 2026-10-20: "Say hi"
@@ -157,7 +157,7 @@ Slide: *Conclusions* (the plugins are all in the *Fabric features and plugins* t
 
 ## Reset between runs
 
-`D1. Orders - RESET` in Postman. Runs with `live: false` never call the webhook. The rate-limit demos (7, 8) reset after a minute.
+`D1. RESET orders` in Postman. Runs with `live: false` never call the webhook. The rate-limit demos (7, 8) reset after a minute.
 
 ## Fallbacks
 

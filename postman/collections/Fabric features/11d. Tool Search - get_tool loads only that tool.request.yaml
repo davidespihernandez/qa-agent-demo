@@ -1,6 +1,6 @@
 $kind: http-request
-description: After searching, the model loads the full schema of the one tool it picked, not the other 232.
-url: "{{fabricUrl}}/mcp/postman-search"
+description: After searching, the model loads the full schema of the one tool it picked, not the other 45.
+url: "{{fabricUrl}}/mcp/github-search"
 method: POST
 headers:
   Content-Type: application/json
@@ -17,7 +17,7 @@ body:
       "params": {
         "name": "get_tool",
         "arguments": {
-          "name": "getAuthenticatedUser"
+          "name": "list_issues"
         }
       }
     }
@@ -26,7 +26,7 @@ order: 11300
 scripts:
   - type: beforeRequest
     code: |-
-      const base = pm.variables.replaceIn('{{fabricUrl}}') + '/mcp/postman-search';
+      const base = pm.variables.replaceIn('{{fabricUrl}}') + '/mcp/github-search';
       pm.sendRequest({
         url: base, method: 'POST',
         header: { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream', 'fg-api-key': pm.variables.get('fabricKey') },
@@ -38,5 +38,5 @@ scripts:
       const text = pm.response.json().result.content[0].text;
       const tool = JSON.parse(text).tool;
       pm.test('HTTP 200', () => pm.response.to.have.status(200));
-      pm.test('Returns the schema of getAuthenticatedUser', () => pm.expect(tool.name).to.eql('getAuthenticatedUser'));
+      pm.test('Returns the schema of list_issues', () => pm.expect(tool.name).to.eql('list_issues'));
     language: text/javascript

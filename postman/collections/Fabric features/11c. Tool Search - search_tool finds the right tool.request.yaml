@@ -1,6 +1,6 @@
 $kind: http-request
 description: The model describes what it needs and the plugin ranks the whole catalog by meaning (embeddings). The top results are the only tools the model ever has to read about.
-url: "{{fabricUrl}}/mcp/postman-search"
+url: "{{fabricUrl}}/mcp/github-search"
 method: POST
 headers:
   Content-Type: application/json
@@ -17,7 +17,7 @@ body:
       "params": {
         "name": "search_tool",
         "arguments": {
-          "query": "list collections in my workspace"
+          "query": "list open issues in a repository"
         }
       }
     }
@@ -26,7 +26,7 @@ order: 11200
 scripts:
   - type: beforeRequest
     code: |-
-      const base = pm.variables.replaceIn('{{fabricUrl}}') + '/mcp/postman-search';
+      const base = pm.variables.replaceIn('{{fabricUrl}}') + '/mcp/github-search';
       pm.sendRequest({
         url: base, method: 'POST',
         header: { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream', 'fg-api-key': pm.variables.get('fabricKey') },
@@ -39,5 +39,5 @@ scripts:
       const results = JSON.parse(text).results;
       console.log(results.map(r => r.name + ' ' + r.score.toFixed(2)).join('\n'));
       pm.test('HTTP 200', () => pm.response.to.have.status(200));
-      pm.test('getCollections is among the top results', () => pm.expect(results.map(r => r.name)).to.include('getCollections'));
+      pm.test('An issue tool is among the top results', () => pm.expect(results.map(r => r.name).some(n => ['issue_read', 'list_issues'].includes(n))).to.be.true);
     language: text/javascript

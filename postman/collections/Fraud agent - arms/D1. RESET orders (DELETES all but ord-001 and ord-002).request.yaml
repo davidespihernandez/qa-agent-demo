@@ -1,5 +1,5 @@
 $kind: http-request
-description: "DESTRUCTIVE on the demo API: deletes every order except ord-001 and ord-002 (it lists them, then deletes the rest). Use it to start a demo from a clean state."
+description: "WARNING, DESTRUCTIVE: this is a plain GET /orders, but its script then deletes every order except ord-001 and ord-002. Use it only to start a demo from a clean state. To just look at the data, use D0."
 url: "{{ordersUrl}}/orders"
 method: GET
 headers:

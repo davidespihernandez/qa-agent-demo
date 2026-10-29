@@ -1,6 +1,6 @@
 $kind: http-example
 request:
-  url: "{{fabricUrl}}/mcp/postman-search"
+  url: "{{fabricUrl}}/mcp/github-search"
   method: POST
   headers:
     Content-Type: application/json
@@ -20,16 +20,7 @@ response:
   statusText: ""
   headers:
     :status: "200"
-    date: Thu, 29 Oct 2026 10:44:27 GMT
     content-type: application/json
-    x-request-id: cb2b16bd-8b0f-4bae-a81f-c1d95552600b
-    x-envoy-upstream-service-time: "181"
-    cf-cache-status: DYNAMIC
-    nel: '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
-    report-to: '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=6G1pHL%2F2uokYKgPaGKgL3N8aIubZ7ElWz2cA4jzQ%2FillcY7SpdwJfysCbYDLvJPFzwQLGzG6hzeuUr9ZsmIEIHgVaz8Jg8A3YGozfabcoF3Rv%2F%2Fha5ql9teMx%2FYPaMN2UoniVTz34e5QKq0I0oEGWUycRfpaGboHS8zir5o%3D"}]}'
-    content-encoding: br
-    server: cloudflare
-    cf-ray: a52195c40b2204a7-MAD
   body:
     type: json
     content: |-

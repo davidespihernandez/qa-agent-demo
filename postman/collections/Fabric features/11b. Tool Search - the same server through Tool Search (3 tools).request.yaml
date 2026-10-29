@@ -1,6 +1,6 @@
 $kind: http-request
-description: Same Postman MCP server, but route /mcp/postman-search has the tool-search plugin. tools/list now returns only three meta-tools (search_tool, get_tool, execute_tool), about 5 KB instead of 400 KB.
-url: "{{fabricUrl}}/mcp/postman-search"
+description: Same GitHub MCP server, but route /mcp/github-search has the tool-search plugin. tools/list now returns only three meta-tools (search_tool, get_tool, execute_tool), about 5 KB instead of 50 KB.
+url: "{{fabricUrl}}/mcp/github-search"
 method: POST
 headers:
   Content-Type: application/json
@@ -20,7 +20,7 @@ order: 11100
 scripts:
   - type: beforeRequest
     code: |-
-      const base = pm.variables.replaceIn('{{fabricUrl}}') + '/mcp/postman-search';
+      const base = pm.variables.replaceIn('{{fabricUrl}}') + '/mcp/github-search';
       pm.sendRequest({
         url: base, method: 'POST',
         header: { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream', 'fg-api-key': pm.variables.get('fabricKey') },

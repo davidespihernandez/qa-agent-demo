@@ -118,7 +118,7 @@ const resetScript = [
 const O = '{{ordersUrl}}';
 const order = (customerId: string, total: number) => ({ customerId, total, currency: 'USD' });
 request(100, 'D0. Orders - list what the agent will see', 'GET', '/orders', 'The live Orders API, reached through the Fabric route /api (gateway key required; the fake API runs on AWS). Shows the data the agent reviews.', undefined, undefined, O);
-request(150, 'D1. Orders - RESET to ord-001 and ord-002', 'GET', '/orders', 'DESTRUCTIVE on the demo API: deletes every order except ord-001 and ord-002 (it lists them, then deletes the rest). Use it to start a demo from a clean state.', undefined, resetScript, O);
+request(150, 'D1. RESET orders (DELETES all but ord-001 and ord-002)', 'GET', '/orders', 'WARNING, DESTRUCTIVE: this is a plain GET /orders, but its script then deletes every order except ord-001 and ord-002. Use it only to start a demo from a clean state. To just look at the data, use D0.', undefined, resetScript, O);
 request(200, 'D2. Orders - new normal order', 'POST', '/orders', 'A routine order: should NOT be flagged.', order('usr-002', 64.9), undefined, O);
 request(300, 'D3. Orders - new high-value order', 'POST', '/orders', 'Over $10,000: the agent should flag it (policy: high value).', order('usr-001', 15250), undefined, O);
 request(400, 'D4. Orders - new order from an unknown customer', 'POST', '/orders', 'Customer is not in the Users API: the agent should flag it.', order('usr-unknown-' + 'x9', 80), undefined, O);

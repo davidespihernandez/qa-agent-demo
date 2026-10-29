@@ -10,7 +10,7 @@ async function post(body: any, sid?: string) {
   if (sid) h['mcp-session-id'] = sid;
   const r = await fetch(U, { method: 'POST', headers: h, body: JSON.stringify(body) });
   let t = await r.text();
-  if (t.includes('data:')) t = t.split('\n').find((l) => l.startsWith('data:'))!.slice(5);
+  if (r.headers.get('content-type')?.includes('text/event-stream')) t = t.split('\n').find((l) => l.startsWith('data:'))!.slice(5);
   return { status: r.status, sid: r.headers.get('mcp-session-id') ?? sid, json: t ? JSON.parse(t) : null };
 }
 const init = await post({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'probe', version: '0' } } });

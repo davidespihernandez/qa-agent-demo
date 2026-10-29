@@ -1,6 +1,6 @@
 $kind: http-example
 request:
-  url: "{{fabricUrl}}/mcp/postman-search"
+  url: "{{fabricUrl}}/mcp/github-search"
   method: POST
   headers:
     Content-Type: application/json
@@ -17,7 +17,7 @@ request:
         "params": {
           "name": "get_tool",
           "arguments": {
-            "name": "getAuthenticatedUser"
+            "name": "list_issues"
           }
         }
       }
@@ -26,16 +26,7 @@ response:
   statusText: ""
   headers:
     :status: "200"
-    date: Thu, 29 Oct 2026 10:49:21 GMT
     content-type: application/json
-    x-request-id: 2390bbae-d82c-4950-84a1-abcca092bd4d
-    x-envoy-upstream-service-time: "128"
-    cf-cache-status: DYNAMIC
-    nel: '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
-    report-to: '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=UoW0TftfokQ3ui1MTVHErneBz0BnC%2FX16Mk%2FlpPO038CBW1Js6bZ7ugyyigl72M3pmluVPo3F2xL0B68sBMsAIaEZUliGBsJlF94MMDuTPguCB%2BjnCYmEf5Po8Fvv6VOxkOkQleFlmQ2pYKyr0AlhUE14Yb5FwC8dmjgTDE%3D"}]}'
-    content-encoding: br
-    server: cloudflare
-    cf-ray: a5219cf2982104a7-MAD
   body:
     type: json
     content: |-
@@ -45,7 +36,7 @@ response:
         "result": {
           "content": [
             {
-              "text": "{\"tool\":{\"name\":\"getAuthenticatedUser\",\"description\":\"Gets information about the authenticated user.\\n- This endpoint provides “current user” context (\\\\`user.id\\\\`, \\\\`username\\\\`, \\\\`teamId\\\\`, roles).\\n- When a user asks for “my …” (e.g., “my workspaces, my information, etc.”), call this first to resolve the user ID.\\n\",\"inputSchema\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"properties\":{},\"type\":\"object\"}}}",
+              "text": "{\"tool\":{\"name\":\"list_issues\",\"description\":\"List issues in a GitHub repository. For pagination, use the 'endCursor' from the previous response's 'pageInfo' in the 'after' parameter.\",\"inputSchema\":{\"properties\":{\"after\":{\"description\":\"Cursor for pagination. Use the cursor from the previous response.\",\"type\":\"string\"},\"direction\":{\"description\":\"Order direction. If provided, the 'orderBy' also needs to be provided.\",\"enum\":[\"ASC\",\"DESC\"],\"type\":\"string\"},\"field_filters\":{\"description\":\"Filter by custom issue field values. Each entry takes a field_name and a value; the server looks up the field and coerces the value to its type (single-select option name, text, number, or YYYY-MM-DD date).\",\"items\":{\"properties\":{\"field_name\":{\"description\":\"Name of the custom field (e.g. \\\"Priority\\\"). Case-insensitive.\",\"type\":\"string\"},\"value\":{\"description\":\"Value to filter on. For single-select fields, the option name (e.g. \\\"P1\\\"). For dates, YYYY-MM-DD. For numbers, the numeric value as a string. For text, the text value.\",\"type\":\"string\"}},\"required\":[\"field_name\",\"value\"],\"type\":\"object\"},\"type\":\"array\"},\"fields\":{\"description\":\"Subset of fields to return for each issue. If omitted, all fields are returned. Use this to reduce response size when you only need specific fields; omitting 'body' and 'field_values' in particular drops the largest per-result data.\",\"items\":{\"enum\":[\"number\",\"title\",\"body\",\"state\",\"user\",\"labels\",\"assignees\",\"comments\",\"created_at\",\"updated_at\",\"field_values\"],\"type\":\"string\"},\"type\":\"array\"},\"labels\":{\"description\":\"Filter by labels\",\"items\":{\"type\":\"string\"},\"type\":\"array\"},\"orderBy\":{\"description\":\"Order issues by field. If provided, the 'direction' also needs to be provided.\",\"enum\":[\"CREATED_AT\",\"UPDATED_AT\",\"COMMENTS\"],\"type\":\"string\"},\"owner\":{\"description\":\"Repository owner\",\"type\":\"string\",\"x-mcp-header\":\"owner\"},\"perPage\":{\"description\":\"Results per page for pagination (min 1, max 100)\",\"maximum\":100,\"minimum\":1,\"type\":\"number\"},\"repo\":{\"description\":\"Repository name\",\"type\":\"string\",\"x-mcp-header\":\"repo\"},\"since\":{\"description\":\"Filter by date (ISO 8601 timestamp)\",\"type\":\"string\"},\"state\":{\"description\":\"Filter by state, by default both open and closed issues are returned when not provided\",\"enum\":[\"OPEN\",\"CLOSED\"],\"type\":\"string\"}},\"required\":[\"owner\",\"repo\"],\"type\":\"object\"}}}",
               "type": "text"
             }
           ],

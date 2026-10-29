@@ -1,6 +1,6 @@
 $kind: http-request
-description: "The model runs the tool it found through execute_tool. Fabric forwards the call to the Postman MCP server with the key kept in Fabric's vault. Read-only call: returns the profile that owns the API key."
-url: "{{fabricUrl}}/mcp/postman-search"
+description: "The model runs the tool it found through execute_tool. Fabric forwards the call to the GitHub MCP server with the token kept in Fabric's vault. Read-only call on a public repository: returns the latest release of cli/cli."
+url: "{{fabricUrl}}/mcp/github-search"
 method: POST
 headers:
   Content-Type: application/json
@@ -17,8 +17,11 @@ body:
       "params": {
         "name": "execute_tool",
         "arguments": {
-          "name": "getAuthenticatedUser",
-          "arguments": {}
+          "name": "get_latest_release",
+          "arguments": {
+            "owner": "cli",
+            "repo": "cli"
+          }
         }
       }
     }
@@ -27,7 +30,7 @@ order: 11400
 scripts:
   - type: beforeRequest
     code: |-
-      const base = pm.variables.replaceIn('{{fabricUrl}}') + '/mcp/postman-search';
+      const base = pm.variables.replaceIn('{{fabricUrl}}') + '/mcp/github-search';
       pm.sendRequest({
         url: base, method: 'POST',
         header: { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream', 'fg-api-key': pm.variables.get('fabricKey') },
@@ -38,5 +41,5 @@ scripts:
     code: |-
       pm.test('HTTP 200', () => pm.response.to.have.status(200));
       pm.test('Tool call succeeded', () => pm.expect(pm.response.json().result.isError).to.not.eql(true));
-      pm.test('Returns the user profile', () => pm.expect(pm.response.json().result.content[0].text).to.include('user'));
+      pm.test('Returns the release', () => pm.expect(pm.response.json().result.content[0].text).to.include('tag_name'));
     language: text/javascript
