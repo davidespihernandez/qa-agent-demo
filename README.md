@@ -30,10 +30,11 @@ The policy is plain English (`agent/agent/fraud-policy.md`): flag orders over $1
 | F | Fabric `/anthropic` and `/api` | one gateway key, tools stay in the agent |
 | F-eco | Fabric `/anthropic-select` | service only allows Haiku 4.5 and Sonnet 4.5; agent asks for Haiku |
 | D | Fabric `/anthropic-adaptive` | adaptive router (decision service Jev); picks Haiku for trivial prompts, Opus 5.5 for our review task |
-| B | Fabric MCP route `/mcp/orders-mcp` (our own MCP server, 21 tools) | tools come from `mcp-server/`, not the bridge |
-| C | Fabric MCP route with Tool Search (`/mcp/orders-all-search`) | the model searches for tools |
+| B | Fabric MCP route `/mcp/orders-all` (our own MCP server, 21 tools, plus GitHub MCP, 46 tools) | all 67 tool definitions go to the model on every step |
+| C | Same 67 tools behind Tool Search (`/mcp/orders-all-search`) | the model sees 3 tools and searches for the rest |
 | D2 | Fabric `/anthropic-adaptive-rules` | adaptive router with our own decision service |
-| B-ro | read-only MCP route | needs a connection to `/mcp/readonly` of `mcp-server/` |
+
+The Postman collection `Fraud agent - arms` compares them in two scenarios, each sorted from the most to the least expensive arm: (1) same 21 tools, A vs F vs F-eco vs F with model "cheap"; (2) a 67-tool catalog, B vs C. Send requests 1 to 6, then 7 (Compare) and open Visualize.
 
 Every run is checked by an oracle: the agent passes only if the set of flagged orders equals the set computed from the data.
 

@@ -28,7 +28,7 @@ scripts:
         const base = (rows.find(x => x.key === s.base) || {}).r;
         const done = rows.filter(x => x.r && x.r.cost != null).sort((a, b) => b.r.cost - a.r.cost);
         const max = done.length ? done[0].r.cost : 1;
-        html += `<h3>${s.title}</h3><table><tr><th class="l">Arm</th><th class="l">What it is</th><th>Tools the model sees</th><th>Input tokens</th><th>Steps</th><th>Time</th><th>Correct?</th><th class="l">Cost per review</th><th>Saving vs baseline</th></tr>`;
+        html += `<h3>${s.title}</h3><table><tr><th class="l">Arm</th><th class="l">What it is</th><th>Tools sent (API tools + 1 webhook tool)</th><th>Input tokens</th><th>Steps</th><th>Time</th><th>Correct?</th><th class="l">Cost per review</th><th>Saving vs baseline</th></tr>`;
         done.forEach(x => {
           const r = x.r, d = base && base.cost ? (1 - r.cost / base.cost) * 100 : null;
           const sv = x.key === s.base ? '<span class="same">baseline</span>' : d == null ? '' : Math.abs(d) < 5 ? '<span class="same">about the same</span>' : d > 0 ? `<span class="good">${d.toFixed(0)}% cheaper</span>` : `<span class="bad">${(-d).toFixed(0)}% more</span>`;

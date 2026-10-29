@@ -129,22 +129,28 @@ No slide for this act: switch to Astro and the Fabric console.
 
 Slide: *Conclusions* (the plugins are all in the *Fabric features and plugins* table, no separate plugin slides). The results table below is for you; there is no Results slide.
 
-1. **Honest numbers** (same task, 13 orders, oracle-checked: the flagged set must equal the expected set):
+1. **Honest numbers** (same task, 13 orders, oracle-checked: the flagged set must equal the expected set; medians of 3 runs, 2026-10-29; all pass). In Postman: `Fraud agent - arms`, requests 1 to 6, then 7 (Compare), Visualize tab. Two scenarios, each sorted from the most to the least expensive:
 
-   | Arm | Path | Model | Cost per review |
-   |---|---|---|---|
-   | A | Direct | Sonnet 4.5 | $0.082 |
-   | F | Fabric, tools in the agent | Sonnet 4.5 | about the same tokens as A |
-   | F-eco | Fabric `/anthropic-select` | Haiku 4.5 | about $0.027 (3 of 3 pass) |
-   | B | Fabric MCP route to our own MCP server (21 tools) | Sonnet 4.5 | $0.084 (8 of 8 pass), 21.1k input tokens |
-   | C | Same tools through Tool Search (3 meta-tools) | Sonnet 4.5 | $0.109 (3 of 3 pass), 26.8k input tokens, 6 steps instead of 4 |
-   | D2 | Adaptive router with our own decision service | routed (Sonnet 5.5 for the review) | 23.7k input tokens (3 of 3 pass); price not verified |
+   **Scenario 1: same agent, same 21 tools. What changes is the path and the model.**
 
-   Fabric alone does not cut tokens. The saving is the model choice, and Fabric lets you enforce it.
-   Tool Search on a small catalog costs more (C): 21 tools are only 6 KB and the three meta-tools are about 5 KB, and each
-   search adds a model call. It pays off on big catalogs: the GitHub MCP server is 46 tools (19,502 tokens) on `/mcp/github` and
-   3 meta-tools (2,147 tokens, 89% fewer) on `/mcp/github-search` (requests 11a-11e). A run with the agent on a big
-   route (B-big, orders + GitHub) is still to do.
+   | Arm | Path | Model | Cost per review | vs baseline |
+   |---|---|---|---|---|
+   | F | Fabric, tools in the agent | Sonnet | $0.080 | about the same |
+   | A | Direct (baseline) | Sonnet | $0.079 | baseline |
+   | F-eco | Fabric `/anthropic-select` | Haiku | $0.026 | 67% cheaper |
+
+   **Scenario 2: same agent, a big tool catalog (our 21 tools + GitHub's 46). What changes is how the tools reach the model.**
+
+   | Arm | Path | Tools the model sees | Input tokens | Cost per review | vs baseline | Time |
+   |---|---|---|---|---|---|---|
+   | B | Fabric MCP route `/mcp/orders-all` (baseline) | 67 | 85.7k | $0.277 | baseline | 21 s |
+   | C | Same catalog behind Tool Search | 3 | 25.6k | $0.104 | 62% cheaper | 31 s (6 to 8 steps instead of 4) |
+
+   Fabric alone does not cut tokens. The savings come from the model choice (F-eco) and from Tool Search on a big
+   catalog. Tool Search on a small catalog costs more: with our 21 tools alone (6 KB), the three meta-tools (5 KB) save
+   nothing and each search adds a model call. Tool Search on GitHub alone: 46 tools, 19,502 tokens, against 2,147 for the
+   3 meta-tools (89% fewer; requests 11a-11e in `Fabric features`). Not included in the comparison: D and D2 (adaptive
+   router, priced by the model it picks).
 2. **Coming up, each measured with the same oracle:**
    - Adaptive model router (`anthropic-adaptive` route): the plugin sends the request text to a decision service
      (Jev, pinned to `jev-1.13.0` with tuned thresholds) and maps the answer to a model. Tested 2026-10-20: "Say hi"
