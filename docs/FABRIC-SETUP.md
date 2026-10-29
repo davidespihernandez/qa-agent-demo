@@ -279,6 +279,32 @@ How the tier becomes a model (observed 2026-10-27): `fast` = claude-haiku-5-5, `
 Seen while building them: plugins can take seconds, once about ten minutes, to apply after saving (a 502 or 404 right after a save is not necessarily a bug); the `llm-router` target dropdown lists only the services attached to the route; the rate-limit counter is not instant; the validator's 422 body is `{"error":"validation_failed"}` without the custom message. Collection check: `postman collection run "postman/collections/Fabric features" -e <env with fabricKey>`.
 Other plugins in the catalog, not used yet: `token-counter`, `agent-audit`, `access-log` (global, observational), and `llm-router` modes loadbalance and lightyear.
 
+### 8d. Tool Search on an existing MCP server (Postman MCP) ✅
+
+Tool Search needs MCP tools behind a Fabric route, but not our bridge: any MCP server connection works. We use Postman's own MCP server (233 tools), which makes the saving obvious. Requests 11a-11e in the `Fabric features` collection.
+
+1. **Connection:** MCP servers > Providers > **Postman** > Connect. Name `postman`, target `https://mcp.postman.com/mcp`. Upstream auth **Bearer token**, credential **Shared** (not OAuth/Per-user, which wants a browser sign-in and leaves only a `connect_postman_tenant_...` tool), paste a Postman API key (`PMAK-...`). Tick "Create gateway route" with Gateway key auth: that gives the plain route `/mcp/postman` (rename it `postman-mcp`). A rejected key shows as `HTTP 401: API key rejected` on any `tools/call` while `tools/list` returns just the connect tool.
+2. **Second route on the same connection:** Routes > New route `postman-mcp-search`, protocol MCP, connection `postman`, path `/mcp/postman-search`, tick **Require gateway auth**. Do not use "Create gateway route" again: it creates another connection.
+3. **Plugin:** Plugins > New instance `postman-tool-search`, plugin `tool-search`, scope **route** `postman-mcp-search` (the form defaults to global). Embedder:
+
+```json
+{
+  "embedder": {
+    "base_url": "http://fabric-gateway-embedder.pm-fabric-dp-workos.svc.cluster.local/v1",
+    "dimension": 384,
+    "max_batch": 32,
+    "model": "BAAI/bge-small-en-v1.5",
+    "provider": "openai"
+  },
+  "result_limit_default": 5,
+  "result_limit_max": 10
+}
+```
+
+**The embedder.** Tool Search ranks tools by meaning: it embeds the name and description of every tool once, embeds each query, and returns the closest tools. On a Postman-managed data plane only Fabric's in-cluster embedder works. External embedders (OpenAI, Gemini, our own service on Astro) are supported only on a self-deployed data plane: with one, the plugin answered `embedder unavailable` in under 1 s and never called them. The namespace in the URL is tenant specific (`pm-fabric-dp-workos` here, the form's example says `pm-fabric-dp`): ask the Fabric team for yours.
+
+Observed 2026-10-29: `tools/list` on `/mcp/postman` returns 233 tools (405 KB), on `/mcp/postman-search` 3 meta-tools (`search_tool`, `get_tool`, `execute_tool`, 5 KB). `search_tool` "list collections in my workspace" ranks `getCollections` first (0.89). MCP over HTTP needs an `initialize` first and the `mcp-session-id` header on later calls; the requests do that in a pre-request script. Use only read-only tools for `execute_tool` (the Postman API key acts as its owner). The first search after a restart embeds the whole catalog, so warm it up before a demo.
+
 ---
 
 ## 9. Point the repo at the new tenant

@@ -1,0 +1,41 @@
+$kind: http-request
+description: "After searching, the model loads the full schema of the one tool it picked, not the other 232."
+url: "{{fabricUrl}}/mcp/postman-search"
+method: POST
+headers:
+  Content-Type: application/json
+  Accept: "application/json, text/event-stream"
+  fg-api-key: "{{fabricKey}}"
+  mcp-session-id: "{{mcpSession}}"
+body:
+  type: json
+  content: |-
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "tools/call",
+      "params": {
+        "name": "get_tool",
+        "arguments": {
+          "name": "getAuthenticatedUser"
+        }
+      }
+    }
+order: 11300
+scripts:
+  - type: beforeRequest
+    code: |-
+      const base = pm.variables.replaceIn('{{fabricUrl}}') + '/mcp/postman-search';
+      pm.sendRequest({
+        url: base, method: 'POST',
+        header: { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream', 'fg-api-key': pm.variables.get('fabricKey') },
+        body: { mode: 'raw', raw: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'postman', version: '1' } } }) },
+      }, (err, res) => pm.variables.set('mcpSession', res.headers.get('mcp-session-id')));
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      const text = pm.response.json().result.content[0].text;
+      const tool = JSON.parse(text).tool;
+      pm.test('HTTP 200', () => pm.response.to.have.status(200));
+      pm.test('Returns the schema of getAuthenticatedUser', () => pm.expect(tool.name).to.eql('getAuthenticatedUser'));
+    language: text/javascript

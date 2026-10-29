@@ -1,13 +1,13 @@
 /**
  * Generates the "Fabric features" Postman collection (no agent involved). Run: bun postman/build-fabric-collection.ts
- * Regenerates every request except the hand-written 2a and 4a-4e (they hold long prompts and are edited in place).
+ * Regenerates every request except the hand-written 2a, 4a-4e and 11a-11e (they hold long prompts and are edited in place).
  */
 import { mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const dir = join(import.meta.dir, 'collections', 'Fabric features');
 mkdirSync(join(dir, '.resources'), { recursive: true });
-for (const f of readdirSync(dir)) if (f.endsWith('.request.yaml') && !/^(2a|4[a-e])\./.test(f)) rmSync(join(dir, f));
+for (const f of readdirSync(dir)) if (f.endsWith('.request.yaml') && !/^(2a|4[a-e]|11[a-e])\./.test(f)) rmSync(join(dir, f));
 
 const q = (s: string) => JSON.stringify(s);
 const block = (lines: string[], pad: string) => lines.map((l) => pad + l).join('\n');

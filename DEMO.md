@@ -49,6 +49,7 @@ provider), *Before Fabric*, *With Fabric*, *Fabric features and plugins*, *How o
    | Required header | 8a, 8b | `anthropic-validated`: no `X-Team` gets 422, with it 200 (chargeback by team) |
    | Redact PII | 9a, 9b | `anthropic-pii`: the model sees `[EMAIL]` and `[CREDIT_CARD]` instead of the real values |
    | Survive an outage | 10a, 10b | `anthropic-fallback`: the first provider (bad key) returns 401, the router moves to the second, the caller gets 200 |
+   | Tool Search | 11a-11e | Postman MCP server behind Fabric: 233 tools (405 KB) on `/mcp/postman`, 3 search tools (5 KB) on `/mcp/postman-search`; then `search_tool`, `get_tool`, `execute_tool` (read-only). Setup: `docs/FABRIC-SETUP.md` 8d |
 
    Tips: wait a minute between demos of 6 and 7 (rolling windows); send 6b by hand and repeat it until the 429 shows (the
    counter is not exact: 6a and 6b can both pass, the third call was the one refused); for PII, the model refuses to repeat card numbers, so
@@ -92,7 +93,7 @@ Slides: divider *Astro*, *Astro turns an agent into a service*, *Five layers*, t
 
 ## Act 3: observability (10 min)
 
-Slide: *One run, seen from both sides* (screenshots of the Astro trace and the Fabric view).
+No slide for this act: switch to Astro and the Fabric console.
 
 1. Run a live review (`live: true`) with the rows created in Postman (`D3`, `D4`, `D5`).
 2. **Astro side:** the trace of the run: steps, tool calls, model calls.
@@ -126,7 +127,7 @@ Slide: *One run, seen from both sides* (screenshots of the Astro trace and the F
 
 ## Act 4: what comes next, token savings (5 to 10 min)
 
-Slides: *Results*, *Next: plugins that save tokens*.
+Slide: *Conclusions* (the plugins are all in the *Fabric features and plugins* table, no separate plugin slides). The results table below is for you; there is no Results slide.
 
 1. **Honest numbers** (same task, 13 orders, oracle-checked: the flagged set must equal the expected set):
 

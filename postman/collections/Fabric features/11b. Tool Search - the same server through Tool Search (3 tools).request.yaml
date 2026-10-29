@@ -1,0 +1,35 @@
+$kind: http-request
+description: "Same Postman MCP server, but route /mcp/postman-search has the tool-search plugin. tools/list now returns only three meta-tools (search_tool, get_tool, execute_tool), about 5 KB instead of 400 KB."
+url: "{{fabricUrl}}/mcp/postman-search"
+method: POST
+headers:
+  Content-Type: application/json
+  Accept: "application/json, text/event-stream"
+  fg-api-key: "{{fabricKey}}"
+  mcp-session-id: "{{mcpSession}}"
+body:
+  type: json
+  content: |-
+    {
+      "jsonrpc": "2.0",
+      "id": 2,
+      "method": "tools/list"
+    }
+order: 11100
+scripts:
+  - type: beforeRequest
+    code: |-
+      const base = pm.variables.replaceIn('{{fabricUrl}}') + '/mcp/postman-search';
+      pm.sendRequest({
+        url: base, method: 'POST',
+        header: { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream', 'fg-api-key': pm.variables.get('fabricKey') },
+        body: { mode: 'raw', raw: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'postman', version: '1' } } }) },
+      }, (err, res) => pm.variables.set('mcpSession', res.headers.get('mcp-session-id')));
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      const tools = pm.response.json().result.tools;
+      console.log('tools:', tools.map(t => t.name).join(', '), '| response bytes:', pm.response.responseSize);
+      pm.test('HTTP 200', () => pm.response.to.have.status(200));
+      pm.test('Only the three meta-tools', () => pm.expect(tools.map(t => t.name).sort()).to.eql(['execute_tool', 'get_tool', 'search_tool']));
+    language: text/javascript
