@@ -1,0 +1,55 @@
+$kind: http-example
+request:
+  url: "{{fabricUrl}}/mcp/postman-search"
+  method: POST
+  headers:
+    Content-Type: application/json
+    Accept: application/json, text/event-stream
+    fg-api-key: "{{fabricKey}}"
+    mcp-session-id: "{{mcpSession}}"
+  body:
+    type: json
+    content: |-
+      {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/call",
+        "params": {
+          "name": "execute_tool",
+          "arguments": {
+            "name": "getAuthenticatedUser",
+            "arguments": {}
+          }
+        }
+      }
+response:
+  statusCode: 200
+  statusText: ""
+  headers:
+    :status: "200"
+    date: Thu, 29 Oct 2026 10:49:47 GMT
+    content-type: application/json
+    x-request-id: 592edfd0-5eb7-4528-80c4-10f79984c91d
+    x-envoy-upstream-service-time: "1144"
+    cf-cache-status: DYNAMIC
+    nel: '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+    report-to: '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=WvfyFOs0kpuRoA1q5UKyFlgAteDrcIbjyEMrGxoPAa6nYJw772dyYCeE97ywalqnk86CfLrWnrKnq%2BtEja4K5LHLRkopiKGLhYnj952na0iIEfK5ttt0llhyIJJKGGkjujHaA0f2ZbEcuyNejGdpI2RcA8m7QFu9pcJnhPE%3D"}]}'
+    content-encoding: br
+    server: cloudflare
+    cf-ray: a5219d8de8d904a7-MAD
+  body:
+    type: json
+    content: |-
+      {
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\n  \"user\": {\n    \"id\":  0,\n    \"sub\": \"redacted\",\n    \"username\": \"demo-user\",\n    \"email\": \"user@example.com\",\n    \"fullName\": \"Demo User\",\n    \"avatar\": \"\",\n    \"isPublic\": true,\n    \"emailVerified\": true,\n    \"teamId\":  0,\n    \"teamName\": \"Demo Team\",\n    \"teamDomain\": \"demo-team\",\n    \"roles\": [\n      \"admin\",\n      \"billing\",\n      \"user\",\n      \"community-manager\",\n      \"supervisor\",\n      \"api-network-manager\",\n      \"partner-manager\",\n      \"flow-editor\",\n      \"api-governance-manager\",\n      \"api-security-manager\",\n      \"ai-reviewer\",\n      \"bot\",\n      \"ai-accessor\",\n      \"team-writer\",\n      \"api-catalog-manager\"\n    ]\n  },\n  \"operations\": [\n    {\n      \"name\": \"ai_millicredits\",\n      \"limit\": 12000,\n      \"usage\": 0,\n      \"overage\": 0\n    },\n    {\n      \"name\": \"performance_test_limit\",\n      \"limit\": 99999999,\n      \"usage\": 0,\n      \"overage\": 0\n    },\n    {\n      \"name\": \"perf_test_milli_vuh\",\n      \"limit\": 0,\n      \"usage\": 0,\n      \"overage\": 0\n    },\n    {\n      \"name\": \"postman_insights_uploads\",\n      \"limit\": 20000000,\n      \"usage\": 5277006,\n      \"overage\": 0\n    },\n    {\n      \"name\": \"test_data_storage\",\n      \"limit\": 8.88,\n      \"usage\": 0,\n      \"overage\": 0\n    },\n    {\n      \"name\": \"test_data_retrieval\",\n      \"limit\": 99999999,\n      \"usage\": 0,\n      \"overage\": 0\n    },\n    {\n      \"name\": \"reusable_packages\",\n      \"limit\": 99999999,\n      \"usage\": 0,\n      \"overage\": 0\n    },\n    {\n      \"name\": \"context_graph_requests\",\n      \"limit\": 5000,\n      \"usage\": 0,\n      \"overage\": 0\n    },\n    {\n      \"name\": \"internal_specifications\",\n      \"limit\": 99999999,\n      \"usage\": 14,\n      \"overage\": 0\n    },\n    {\n      \"name\": \"file_storage_limit\",\n      \"limit\": 100,\n      \"usage\": 0,\n      \"overage\": 0\n    },\n    {\n      \"name\": \"collection_run_limit\",\n      \"limit\": 99999999,\n      \"usage\": 0,\n      \"overage\": 0\n    },\n    {\n      \"name\": \"mock_usage\",\n      \"limit\": 99999999,\n      \"usage\": 0,\n      \"overage\": 0\n    },\n    {\n      \"name\": \"monitor_request_runs\",\n      \"limit\": 10000,\n      \"usage\": 70,\n      \"overage\": 0\n    },\n    {\n      \"name\": \"api_usage\",\n      \"limit\": 10000000,\n      \"usage\": 0,\n      \"overage\": 0\n    },\n    {\n      \"name\": \"custom_domains\",\n      \"limit\": 99999999,\n      \"usage\": 0,\n      \"overage\": 0\n    },\n    {\n      \"name\": \"flow_requests\",\n      \"limit\": 500,\n      \"usage\": 0,\n      \"overage\": 0\n    },\n    {\n      \"name\": \"flows_local_runs\",\n      \"limit\": 99999999,\n      \"usage\": 0,\n      \"overage\": 0\n    }\n  ]\n}"
+            }
+          ]
+        },
+        "jsonrpc": "2.0",
+        "id": 2
+      }
+order: 1000

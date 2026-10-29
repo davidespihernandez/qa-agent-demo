@@ -1,0 +1,103 @@
+$kind: http-example
+request:
+  url: "{{fabricUrl}}/mcp/postman-search"
+  method: POST
+  headers:
+    Content-Type: application/json
+    Accept: application/json, text/event-stream
+    fg-api-key: "{{fabricKey}}"
+    mcp-session-id: "{{mcpSession}}"
+  body:
+    type: json
+    content: |-
+      {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/list"
+      }
+response:
+  statusCode: 200
+  statusText: ""
+  headers:
+    :status: "200"
+    date: Thu, 29 Oct 2026 10:44:27 GMT
+    content-type: application/json
+    x-request-id: cb2b16bd-8b0f-4bae-a81f-c1d95552600b
+    x-envoy-upstream-service-time: "181"
+    cf-cache-status: DYNAMIC
+    nel: '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+    report-to: '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=6G1pHL%2F2uokYKgPaGKgL3N8aIubZ7ElWz2cA4jzQ%2FillcY7SpdwJfysCbYDLvJPFzwQLGzG6hzeuUr9ZsmIEIHgVaz8Jg8A3YGozfabcoF3Rv%2F%2Fha5ql9teMx%2FYPaMN2UoniVTz34e5QKq0I0oEGWUycRfpaGboHS8zir5o%3D"}]}'
+    content-encoding: br
+    server: cloudflare
+    cf-ray: a52195c40b2204a7-MAD
+  body:
+    type: json
+    content: |-
+      {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "tools": [
+            {
+              "name": "search_tool",
+              "description": "REQUIRED before telling the user a service or capability is unintegrated. If the user names any external service (Confluence, Jira, GitHub, Linear, PagerDuty, Notion, Datadog, Slack, an internal API, etc.) and you do not see a matching tool in tools/list, you MUST call search_tool before responding. Most tools on this gateway are held back from tools/list to keep your context small — absence from the visible list is NOT evidence of absence from the catalog. Common failure mode this prevents: scanning the visible MCP namespaces (\"I see Slack, NewRelic, Chrome DevTools... no Atlassian\") and concluding the capability is unavailable. That conclusion is almost always wrong — search first, conclude after. Phrase the query as user intent (\"search confluence for X\", \"open a github PR\", \"page on-call\"), not as a guessed tool name. Returns ranked {name, one-line summary} pairs in `results`. The response may also include `connect_suggestions`: services that exist but are NOT yet authorized. If no entry in `results` fits, do NOT tell the user the capability is missing — call execute_tool with the connect_* name from connect_suggestions to authorize it, then call search_tool again. Flow: search_tool -> get_tool (load schema) -> execute_tool (invoke).",
+              "inputSchema": {
+                "type": "object",
+                "required": [
+                  "query"
+                ],
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "description": "A semantically rich description of the capability you need — NOT the user's raw words and NOT a guessed tool name. Expand a naive request before searching: state the action verb (create, list, search, update, delete, get...), the target object (pull request, issue, dashboard, page, incident...), the service/product if known (GitHub, Jira, Confluence, New Relic, Slack...), and 1-2 synonyms for the action. Phrase it the way a tool's own documentation would describe that capability — results are ranked by semantic similarity over tool names and descriptions, so a description-style query matches better than a terse intent. Examples: user 'my recent tickets' -> 'search Jira issues assigned to the current user, sorted by most recently updated'; user 'open a PR' -> 'create a new GitHub pull request'. Do NOT invent tool-specific query syntax (e.g. JQL/CQL) or name services the user did not mention."
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "description": "Maximum candidates to return. Defaults to 10. Raise when the intent is broad and you want to compare more options before loading a schema with get_tool.",
+                    "default": 10,
+                    "minimum": 1
+                  }
+                }
+              }
+            },
+            {
+              "name": "get_tool",
+              "description": "REQUIRED before invoking any tool discovered via search_tool. Before calling execute_tool on a name returned by search, you MUST call get_tool to load its inputSchema — guessing arguments from the one-line summary will produce validation errors and waste a roundtrip. Schemas are intentionally kept OUT of search_tool results to save your context; get_tool loads exactly one on demand. Common failure mode this prevents: jumping straight from search_tool to execute_tool with hand-rolled arguments because the summary \"looked clear enough\" — then getting an InputValidationError and having to call get_tool anyway. Call get_tool for each candidate you actually intend to invoke (cheap, idempotent). Skip only when you already invoked this exact tool earlier in the session and the schema is still in context. Returns the tool's full description + JSON inputSchema; the schema is what execute_tool's `arguments` must conform to.",
+              "inputSchema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Exact tool name returned by search_tool (or a name remembered from a prior session — names are stable)."
+                  }
+                }
+              }
+            },
+            {
+              "name": "execute_tool",
+              "description": "REQUIRED to actually fulfill a user request once the right tool has been discovered — there is no other invocation path. Tools surfaced via search_tool / get_tool are NOT promoted into tools/list, so they cannot be called as first-class tools; execute_tool is the only channel. Once search_tool + get_tool have revealed a matching tool, you MUST call execute_tool to fulfill the request — do NOT fall back to a free-text answer, an apology, or a \"this isn't connected\" message just because the name is absent from tools/list. Common failure mode this prevents: discovering the correct tool via search, then answering the user from memory or hallucination instead of actually invoking it. Pass the exact tool name returned by search_tool and an arguments object that conforms to the inputSchema returned by get_tool; the wrapped tool's result is returned verbatim. Names already invoked earlier in the session can be reused directly without another search_tool + get_tool round. This is also how you authorize a service: pass a connect_* name from search_tool's connect_suggestions (no get_tool needed; it takes no arguments) to start the OAuth flow.",
+              "inputSchema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Exact tool name to invoke, as returned by search_tool. Discovered tools are not in tools/list; execute_tool is the only way to call them."
+                  },
+                  "arguments": {
+                    "type": "object",
+                    "description": "Arguments object matching the tool's inputSchema (from get_tool). Omit or pass {} for tools with no parameters. Call get_tool first if you have not loaded the schema this session.",
+                    "default": {}
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+order: 1000

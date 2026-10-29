@@ -1,10 +1,10 @@
 $kind: http-request
-description: "After searching, the model loads the full schema of the one tool it picked, not the other 232."
+description: After searching, the model loads the full schema of the one tool it picked, not the other 232.
 url: "{{fabricUrl}}/mcp/postman-search"
 method: POST
 headers:
   Content-Type: application/json
-  Accept: "application/json, text/event-stream"
+  Accept: application/json, text/event-stream
   fg-api-key: "{{fabricKey}}"
   mcp-session-id: "{{mcpSession}}"
 body:
@@ -21,6 +21,7 @@ body:
         }
       }
     }
+examples: .resources/11d. Tool Search - get_tool loads only that tool.resources/examples
 order: 11300
 scripts:
   - type: beforeRequest

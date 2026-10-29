@@ -1,0 +1,55 @@
+$kind: http-example
+request:
+  url: "{{fabricUrl}}/mcp/postman-search"
+  method: POST
+  headers:
+    Content-Type: application/json
+    Accept: application/json, text/event-stream
+    fg-api-key: "{{fabricKey}}"
+    mcp-session-id: "{{mcpSession}}"
+  body:
+    type: json
+    content: |-
+      {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/call",
+        "params": {
+          "name": "get_tool",
+          "arguments": {
+            "name": "getAuthenticatedUser"
+          }
+        }
+      }
+response:
+  statusCode: 200
+  statusText: ""
+  headers:
+    :status: "200"
+    date: Thu, 29 Oct 2026 10:49:21 GMT
+    content-type: application/json
+    x-request-id: 2390bbae-d82c-4950-84a1-abcca092bd4d
+    x-envoy-upstream-service-time: "128"
+    cf-cache-status: DYNAMIC
+    nel: '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+    report-to: '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=UoW0TftfokQ3ui1MTVHErneBz0BnC%2FX16Mk%2FlpPO038CBW1Js6bZ7ugyyigl72M3pmluVPo3F2xL0B68sBMsAIaEZUliGBsJlF94MMDuTPguCB%2BjnCYmEf5Po8Fvv6VOxkOkQleFlmQ2pYKyr0AlhUE14Yb5FwC8dmjgTDE%3D"}]}'
+    content-encoding: br
+    server: cloudflare
+    cf-ray: a5219cf2982104a7-MAD
+  body:
+    type: json
+    content: |-
+      {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "content": [
+            {
+              "text": "{\"tool\":{\"name\":\"getAuthenticatedUser\",\"description\":\"Gets information about the authenticated user.\\n- This endpoint provides “current user” context (\\\\`user.id\\\\`, \\\\`username\\\\`, \\\\`teamId\\\\`, roles).\\n- When a user asks for “my …” (e.g., “my workspaces, my information, etc.”), call this first to resolve the user ID.\\n\",\"inputSchema\":{\"$schema\":\"http://json-schema.org/draft-07/schema#\",\"properties\":{},\"type\":\"object\"}}}",
+              "type": "text"
+            }
+          ],
+          "isError": false
+        }
+      }
+order: 1000

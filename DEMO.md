@@ -136,15 +136,22 @@ Slide: *Conclusions* (the plugins are all in the *Fabric features and plugins* t
    | A | Direct | Sonnet 4.5 | $0.082 |
    | F | Fabric, tools in the agent | Sonnet 4.5 | about the same tokens as A |
    | F-eco | Fabric `/anthropic-select` | Haiku 4.5 | about $0.027 (3 of 3 pass) |
+   | B | Fabric MCP route to our own MCP server (21 tools) | Sonnet 4.5 | $0.084 (8 of 8 pass), 21.1k input tokens |
+   | C | Same tools through Tool Search (3 meta-tools) | Sonnet 4.5 | $0.109 (3 of 3 pass), 26.8k input tokens, 6 steps instead of 4 |
+   | D2 | Adaptive router with our own decision service | routed (Sonnet 5.5 for the review) | 23.7k input tokens (3 of 3 pass); price not verified |
 
    Fabric alone does not cut tokens. The saving is the model choice, and Fabric lets you enforce it.
+   Tool Search on a small catalog costs more (C): 21 tools are only 6 KB and the three meta-tools are about 5 KB, and each
+   search adds a model call. It pays off on big catalogs: the Postman MCP server is 233 tools (405 KB) on `/mcp/postman` and
+   3 meta-tools (5 KB) on `/mcp/postman-search` (requests 11a-11e). A run with the agent on a 254-tool route (B-big) is still
+   to do: Fabric's route to Postman flapped between the full list and only a connect tool (reported).
 2. **Coming up, each measured with the same oracle:**
    - Adaptive model router (`anthropic-adaptive` route): the plugin sends the request text to a decision service
      (Jev, pinned to `jev-1.13.0` with tuned thresholds) and maps the answer to a model. Tested 2026-10-20: "Say hi"
      and "2+2" go to Haiku 5.5, but our review prompt goes to Opus 5.5 even with no tool data (so it is the task,
      not the tool schemas: system messages and tool descriptions are off by default). Cost about 2x arm A if Opus 5.5
      is priced like Opus 4.5 (unverified). Open: do customers get a Jev key? Who tunes the thresholds?
-   - MCP bridge and Tool Search: three meta-tools instead of 21 tool schemas. Not yet in production.
+   - The `mcp-http-bridge` plugin is still not in production; we replaced it with our own MCP server (`mcp-server/`, section 8e of `docs/FABRIC-SETUP.md`).
    - Per-key rate limits and token budgets: already shown in the `Fabric features` collection (7 and 8); next is applying them per agent key.
 3. Close with the customer's own scenario: which agent, which keys, which models, which tools.
 

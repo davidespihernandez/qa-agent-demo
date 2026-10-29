@@ -305,6 +305,20 @@ Tool Search needs MCP tools behind a Fabric route, but not our bridge: any MCP s
 
 Observed 2026-10-29: `tools/list` on `/mcp/postman` returns 233 tools (405 KB), on `/mcp/postman-search` 3 meta-tools (`search_tool`, `get_tool`, `execute_tool`, 5 KB). `search_tool` "list collections in my workspace" ranks `getCollections` first (0.89). MCP over HTTP needs an `initialize` first and the `mcp-session-id` header on later calls; the requests do that in a pre-request script. Use only read-only tools for `execute_tool` (the Postman API key acts as its owner). The first search after a restart embeds the whole catalog, so warm it up before a demo.
 
+### 8e. Your own MCP server for the demo APIs (instead of `mcp-http-bridge`) ✅
+
+Fabric can front any MCP server (MCP servers > Connections > Create > Provider **Custom server**), so the Orders, Users and Payments APIs get an MCP front of our own. Code: `mcp-server/` (Bun, stateless JSON-RPC over HTTP; tools are generated from `specs/bridge-tools.json` and `specs/demo-apis.json`; each tool call is the matching HTTP call to `API_BASE_URL`).
+
+1. **Deploy on Astro:** `cd mcp-server`, `ast blueprint push -y -V private`, `ast deploy orders-mcp --vars-file <file with MCP_API_KEY=...>`. Set the agent **Public** in the dashboard and redeploy (pass the key again with `--vars-file`: `--var MCP_API_KEY=@` fails because it is not an account secret). The key goes in `.env` as `ORDERS_MCP_KEY`. Check `GET /health` (`tools: 21`, `readOnlyTools: 8`). Astro passes an unset optional input as an empty string, so the server uses `||`, not `??`, for `API_BASE_URL`.
+2. **Fabric connection:** Provider Custom server, name `orders-mcp`, target `<public url>/mcp`, upstream auth **API key**, header `x-api-key`, **Shared**, value = `ORDERS_MCP_KEY`. Tick "Create gateway route" with Gateway key: the route gets the default path `/mcp/orders-mcp` (not `/mcp/orders`): **arm B**, 21 tools, 6 KB.
+3. **Read-only (arm B-ro):** a second connection to `<public url>/mcp/readonly` (8 GET tools).
+4. **Tool Search (arm C):** a route with the connection(s) and a `tool-search` plugin scoped to that route, embedder as in 8d. We used `/mcp/orders-all-search` (connections `orders-mcp` and `postman`, so 254 tools behind it). A route with two connections prefixes the tool names (`ord__listOrders`) and the route form accepts several connections. Searches such as "get a user by id" rank `ord__getUser` first (0.98).
+5. **Harness:** `MCP_URL=<fabric>/mcp/orders-mcp bun harness/run.ts --arm B --runs 3`, `MCP_URL_SEARCH=<fabric>/mcp/orders-all-search ... --arm C`, and for D2 `MCP_URL= MCP_URL_READONLY= MCP_URL_SEARCH= LLM_BASE_URL=<fabric>/anthropic-adaptive-rules ... --arm D2` (an empty `MCP_URL` is needed because `.env` points to the old bridge route).
+
+**Results (2026-10-29, 13 orders, oracle-checked, all runs pass).** Median input tokens: A 20.4k, F 20.5k, B 21.1k, C 26.8k (6 steps, 30 s against 4 steps, 20 s), D 23.6k, D2 23.7k (13 s). On a 21-tool catalog Tool Search costs more (the tool list is only 6 KB and the three meta-tools are 5 KB, each search is an extra model call); it pays off on big catalogs (Postman MCP: 233 tools, 405 KB, against 3 tools, 5 KB). Dollar costs from `harness/compare.ts` use Sonnet 4.5 prices, so only A, B, C and F are valid; F-eco, D and D2 ran on other models.
+
+**Known issue:** the Fabric route to the Postman MCP server flaps between the full tool list and a single `connect_postman_tenant_...` tool (also `Session not found` and `catalog_unavailable`), about every other call, which makes combined routes unreliable. Reported to the Fabric team. The agent arms on routes that include Postman should check the tool count before each run.
+
 ---
 
 ## 9. Point the repo at the new tenant

@@ -1,0 +1,55 @@
+$kind: http-example
+request:
+  url: "{{fabricUrl}}/mcp/postman-search"
+  method: POST
+  headers:
+    Content-Type: application/json
+    Accept: application/json, text/event-stream
+    fg-api-key: "{{fabricKey}}"
+    mcp-session-id: "{{mcpSession}}"
+  body:
+    type: json
+    content: |-
+      {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/call",
+        "params": {
+          "name": "search_tool",
+          "arguments": {
+            "query": "list collections in my workspace"
+          }
+        }
+      }
+response:
+  statusCode: 200
+  statusText: ""
+  headers:
+    :status: "200"
+    date: Thu, 29 Oct 2026 10:45:06 GMT
+    content-type: application/json
+    x-request-id: a90cb572-a77e-49a6-9674-83806938fcb0
+    x-envoy-upstream-service-time: "151"
+    cf-cache-status: DYNAMIC
+    nel: '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}'
+    report-to: '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=0tShk7Z2RtmxdS8v75rhGkJCOEcQVtbYlECq3fDI2ZhGCHgbjAdA1oOPeqSDeg5R%2Fu%2FbIufcUuQwcdBrpGUsqFO6IUNMcVtXmMWtaXTUJ%2BHuKi%2BN7d4f3vLn5qyj9fAaoYDKNXAfNjO0WRdiMAJzHwFuXgsda92kdhPx3BU%3D"}]}'
+    content-encoding: br
+    server: cloudflare
+    cf-ray: a52196bbff7204a7-MAD
+  body:
+    type: json
+    content: |-
+      {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "content": [
+            {
+              "text": "{\"degraded_count\":0,\"results\":[{\"name\":\"getCollections\",\"summary\":\"The workspace ID query is required for this endpoint. If not provided, the LLM should ask the user to provide it.\",\"score\":0.8938262},{\"name\":\"getWorkspaceTags\",\"summary\":\"Gets all the tags associated with a workspace.\",\"score\":0.8778523},{\"name\":\"getWorkspaces\",\"summary\":\"Gets all workspaces you have access to.\\n- For “my …” requests, first call GET \\\\`/me\\\\` and pass \\\\`createdBy={me.user.id}\\\\…\",\"score\":0.8705645},{\"name\":\"listPrivateNetworkAddRequests\",\"summary\":\"Gets all requests to add workspaces to your team's Private API Network.\\n\\nWARNING: This tool is for Private API Network m…\",\"score\":0.85585135},{\"name\":\"getSdks\",\"summary\":\"Lists the SDKs the caller can see in a workspace, with each one's build status.\\n\\\\`workspaceId\\\\` is required. Filter with…\",\"score\":0.8521445}]}",
+              "type": "text"
+            }
+          ],
+          "isError": false
+        }
+      }
+order: 1000

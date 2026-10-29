@@ -4,7 +4,7 @@ url: "{{fabricUrl}}/mcp/postman-search"
 method: POST
 headers:
   Content-Type: application/json
-  Accept: "application/json, text/event-stream"
+  Accept: application/json, text/event-stream
   fg-api-key: "{{fabricKey}}"
   mcp-session-id: "{{mcpSession}}"
 body:
@@ -22,6 +22,7 @@ body:
         }
       }
     }
+examples: .resources/11e. Tool Search - execute_tool calls it.resources/examples
 order: 11400
 scripts:
   - type: beforeRequest

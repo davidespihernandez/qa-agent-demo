@@ -30,7 +30,10 @@ The policy is plain English (`agent/agent/fraud-policy.md`): flag orders over $1
 | F | Fabric `/anthropic` and `/api` | one gateway key, tools stay in the agent |
 | F-eco | Fabric `/anthropic-select` | service only allows Haiku 4.5 and Sonnet 4.5; agent asks for Haiku |
 | D | Fabric `/anthropic-adaptive` | adaptive router (decision service Jev); picks Haiku for trivial prompts, Opus 5.5 for our review task |
-| B, B-ro, C | Fabric MCP route (all / read-only / Tool Search) | blocked until `mcp-http-bridge` exists in production |
+| B | Fabric MCP route `/mcp/orders-mcp` (our own MCP server, 21 tools) | tools come from `mcp-server/`, not the bridge |
+| C | Fabric MCP route with Tool Search (`/mcp/orders-all-search`) | the model searches for tools |
+| D2 | Fabric `/anthropic-adaptive-rules` | adaptive router with our own decision service |
+| B-ro | read-only MCP route | needs a connection to `/mcp/readonly` of `mcp-server/` |
 
 Every run is checked by an oracle: the agent passes only if the set of flagged orders equals the set computed from the data.
 
@@ -41,6 +44,7 @@ Every run is checked by an oracle: the agent passes only if the set of flagged o
 | `agent/` | the agent (Mastra), its HTTP API (`POST /review`) and `astropods.yml` |
 | `harness/` | runs one or more arms: `bun harness/run.ts --arm F-eco --runs 3` |
 | `postman/` | two collections: `Fraud agent - arms` (every arm, data-reset requests, the Flow webhook; built by `build-collection.ts`) and `Fabric features` (26 requests that show Fabric on its own: auth, Transformer, allowlist, adaptive router, cost, traces, rate limits, validator, PII, fallback; built by `build-fabric-collection.ts`) |
+| `mcp-server/` | a small MCP server (Bun, on Astro) that turns the Orders, Users and Payments APIs into 21 MCP tools (`/mcp`) or the 8 read-only ones (`/mcp/readonly`); stands in for the missing `mcp-http-bridge`; see section 8e of `docs/FABRIC-SETUP.md` |
 | `decision-service/` | a small deterministic HTTP service (Bun, deployed on Astro) that answers the adaptive router's questions with plain rules instead of Jev; see `docs/FABRIC-SETUP.md` section 8c |
 | `scripts/` | seed data, tool dump, MCP probe |
 | `docs/` | Fabric setup guide, webhook contract, plan |

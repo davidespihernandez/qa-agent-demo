@@ -1,0 +1,522 @@
+[
+ {
+  "name": "getHealth",
+  "description": "Health check",
+  "inputSchema": {
+   "properties": {},
+   "type": "object"
+  }
+ },
+ {
+  "name": "getOpenApi",
+  "description": "OpenAPI specification",
+  "inputSchema": {
+   "properties": {},
+   "type": "object"
+  }
+ },
+ {
+  "name": "listOrders",
+  "description": "List orders",
+  "inputSchema": {
+   "properties": {},
+   "type": "object"
+  }
+ },
+ {
+  "name": "createOrder",
+  "description": "Create order",
+  "inputSchema": {
+   "properties": {
+    "currency": {
+     "default": "USD",
+     "description": "ISO 4217 currency code",
+     "example": "USD",
+     "maxLength": 3,
+     "minLength": 3,
+     "type": "string"
+    },
+    "customerId": {
+     "description": "Customer placing the order",
+     "example": "usr-002",
+     "type": "string"
+    },
+    "status": {
+     "default": "pending",
+     "description": "Initial order status",
+     "enum": [
+      "pending",
+      "processing",
+      "shipped",
+      "cancelled"
+     ],
+     "example": "pending",
+     "type": "string"
+    },
+    "total": {
+     "example": 99.5,
+     "format": "double",
+     "minimum": 0,
+     "type": "number"
+    }
+   },
+   "required": [
+    "customerId",
+    "total"
+   ],
+   "type": "object"
+  }
+ },
+ {
+  "name": "deleteOrder",
+  "description": "Delete order",
+  "inputSchema": {
+   "properties": {
+    "id": {
+     "description": "Order identifier",
+     "example": "ord-001",
+     "type": "string"
+    }
+   },
+   "required": [
+    "id"
+   ],
+   "type": "object"
+  }
+ },
+ {
+  "name": "getOrder",
+  "description": "Get order by ID",
+  "inputSchema": {
+   "properties": {
+    "id": {
+     "description": "Order identifier",
+     "example": "ord-001",
+     "type": "string"
+    }
+   },
+   "required": [
+    "id"
+   ],
+   "type": "object"
+  }
+ },
+ {
+  "name": "patchOrder",
+  "description": "Partially update order",
+  "inputSchema": {
+   "properties": {
+    "currency": {
+     "example": "EUR",
+     "maxLength": 3,
+     "minLength": 3,
+     "type": "string"
+    },
+    "customerId": {
+     "example": "usr-003",
+     "type": "string"
+    },
+    "id": {
+     "description": "Order identifier",
+     "example": "ord-001",
+     "type": "string"
+    },
+    "status": {
+     "enum": [
+      "pending",
+      "processing",
+      "shipped",
+      "cancelled"
+     ],
+     "example": "shipped",
+     "type": "string"
+    },
+    "total": {
+     "example": 149.99,
+     "format": "double",
+     "minimum": 0,
+     "type": "number"
+    }
+   },
+   "required": [
+    "id"
+   ],
+   "type": "object"
+  }
+ },
+ {
+  "name": "updateOrder",
+  "description": "Replace order",
+  "inputSchema": {
+   "properties": {
+    "currency": {
+     "example": "EUR",
+     "maxLength": 3,
+     "minLength": 3,
+     "type": "string"
+    },
+    "customerId": {
+     "example": "usr-003",
+     "type": "string"
+    },
+    "id": {
+     "description": "Order identifier",
+     "example": "ord-001",
+     "type": "string"
+    },
+    "status": {
+     "enum": [
+      "pending",
+      "processing",
+      "shipped",
+      "cancelled"
+     ],
+     "example": "processing",
+     "type": "string"
+    },
+    "total": {
+     "example": 149.99,
+     "format": "double",
+     "minimum": 0,
+     "type": "number"
+    }
+   },
+   "required": [
+    "customerId",
+    "id",
+    "status",
+    "total"
+   ],
+   "type": "object"
+  }
+ },
+ {
+  "name": "listPayments",
+  "description": "List payments",
+  "inputSchema": {
+   "properties": {},
+   "type": "object"
+  }
+ },
+ {
+  "name": "createPayment",
+  "description": "Create payment",
+  "inputSchema": {
+   "properties": {
+    "amount": {
+     "example": 49.99,
+     "format": "double",
+     "minimum": 0,
+     "type": "number"
+    },
+    "currency": {
+     "default": "USD",
+     "example": "USD",
+     "maxLength": 3,
+     "minLength": 3,
+     "type": "string"
+    },
+    "orderId": {
+     "example": "ord-001",
+     "type": "string"
+    },
+    "status": {
+     "default": "completed",
+     "enum": [
+      "pending",
+      "completed",
+      "refunded"
+     ],
+     "example": "completed",
+     "type": "string"
+    }
+   },
+   "required": [
+    "amount",
+    "orderId"
+   ],
+   "type": "object"
+  }
+ },
+ {
+  "name": "refundPayment",
+  "description": "Refund a payment",
+  "inputSchema": {
+   "properties": {
+    "paymentId": {
+     "example": "pay-001",
+     "type": "string"
+    },
+    "reason": {
+     "example": "customer_request",
+     "type": "string"
+    }
+   },
+   "required": [
+    "paymentId"
+   ],
+   "type": "object"
+  }
+ },
+ {
+  "name": "deletePayment",
+  "description": "Delete payment",
+  "inputSchema": {
+   "properties": {
+    "id": {
+     "description": "Payment identifier",
+     "example": "pay-001",
+     "type": "string"
+    }
+   },
+   "required": [
+    "id"
+   ],
+   "type": "object"
+  }
+ },
+ {
+  "name": "getPayment",
+  "description": "Get payment by ID",
+  "inputSchema": {
+   "properties": {
+    "id": {
+     "description": "Payment identifier",
+     "example": "pay-001",
+     "type": "string"
+    }
+   },
+   "required": [
+    "id"
+   ],
+   "type": "object"
+  }
+ },
+ {
+  "name": "patchPayment",
+  "description": "Partially update payment",
+  "inputSchema": {
+   "properties": {
+    "amount": {
+     "format": "double",
+     "minimum": 0,
+     "type": "number"
+    },
+    "currency": {
+     "example": "USD",
+     "maxLength": 3,
+     "minLength": 3,
+     "type": "string"
+    },
+    "id": {
+     "description": "Payment identifier",
+     "example": "pay-001",
+     "type": "string"
+    },
+    "orderId": {
+     "type": "string"
+    },
+    "status": {
+     "enum": [
+      "pending",
+      "completed",
+      "refunded"
+     ],
+     "example": "completed",
+     "type": "string"
+    }
+   },
+   "required": [
+    "id"
+   ],
+   "type": "object"
+  }
+ },
+ {
+  "name": "updatePayment",
+  "description": "Replace payment",
+  "inputSchema": {
+   "properties": {
+    "amount": {
+     "example": 129.5,
+     "format": "double",
+     "minimum": 0,
+     "type": "number"
+    },
+    "currency": {
+     "example": "USD",
+     "maxLength": 3,
+     "minLength": 3,
+     "type": "string"
+    },
+    "id": {
+     "description": "Payment identifier",
+     "example": "pay-001",
+     "type": "string"
+    },
+    "orderId": {
+     "example": "ord-002",
+     "type": "string"
+    },
+    "status": {
+     "enum": [
+      "pending",
+      "completed",
+      "refunded"
+     ],
+     "example": "completed",
+     "type": "string"
+    }
+   },
+   "required": [
+    "amount",
+    "id",
+    "orderId",
+    "status"
+   ],
+   "type": "object"
+  }
+ },
+ {
+  "name": "listUsers",
+  "description": "List users",
+  "inputSchema": {
+   "properties": {},
+   "type": "object"
+  }
+ },
+ {
+  "name": "createUser",
+  "description": "Create user",
+  "inputSchema": {
+   "properties": {
+    "email": {
+     "example": "qa.test@example.com",
+     "format": "email",
+     "type": "string"
+    },
+    "name": {
+     "example": "QA Test User",
+     "type": "string"
+    },
+    "role": {
+     "default": "customer",
+     "enum": [
+      "customer",
+      "admin"
+     ],
+     "example": "customer",
+     "type": "string"
+    }
+   },
+   "required": [
+    "email",
+    "name"
+   ],
+   "type": "object"
+  }
+ },
+ {
+  "name": "deleteUser",
+  "description": "Delete user",
+  "inputSchema": {
+   "properties": {
+    "id": {
+     "description": "User identifier",
+     "example": "usr-001",
+     "type": "string"
+    }
+   },
+   "required": [
+    "id"
+   ],
+   "type": "object"
+  }
+ },
+ {
+  "name": "getUser",
+  "description": "Get user by ID",
+  "inputSchema": {
+   "properties": {
+    "id": {
+     "description": "User identifier",
+     "example": "usr-001",
+     "type": "string"
+    }
+   },
+   "required": [
+    "id"
+   ],
+   "type": "object"
+  }
+ },
+ {
+  "name": "patchUser",
+  "description": "Partially update user",
+  "inputSchema": {
+   "properties": {
+    "email": {
+     "format": "email",
+     "type": "string"
+    },
+    "id": {
+     "description": "User identifier",
+     "example": "usr-001",
+     "type": "string"
+    },
+    "name": {
+     "type": "string"
+    },
+    "role": {
+     "enum": [
+      "customer",
+      "admin"
+     ],
+     "example": "customer",
+     "type": "string"
+    }
+   },
+   "required": [
+    "id"
+   ],
+   "type": "object"
+  }
+ },
+ {
+  "name": "updateUser",
+  "description": "Replace user",
+  "inputSchema": {
+   "properties": {
+    "email": {
+     "example": "qa.updated@example.com",
+     "format": "email",
+     "type": "string"
+    },
+    "id": {
+     "description": "User identifier",
+     "example": "usr-001",
+     "type": "string"
+    },
+    "name": {
+     "example": "QA Updated User",
+     "type": "string"
+    },
+    "role": {
+     "enum": [
+      "customer",
+      "admin"
+     ],
+     "example": "customer",
+     "type": "string"
+    }
+   },
+   "required": [
+    "email",
+    "id",
+    "name",
+    "role"
+   ],
+   "type": "object"
+  }
+ }
+]

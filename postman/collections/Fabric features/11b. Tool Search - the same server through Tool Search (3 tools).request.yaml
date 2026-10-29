@@ -1,10 +1,10 @@
 $kind: http-request
-description: "Same Postman MCP server, but route /mcp/postman-search has the tool-search plugin. tools/list now returns only three meta-tools (search_tool, get_tool, execute_tool), about 5 KB instead of 400 KB."
+description: Same Postman MCP server, but route /mcp/postman-search has the tool-search plugin. tools/list now returns only three meta-tools (search_tool, get_tool, execute_tool), about 5 KB instead of 400 KB.
 url: "{{fabricUrl}}/mcp/postman-search"
 method: POST
 headers:
   Content-Type: application/json
-  Accept: "application/json, text/event-stream"
+  Accept: application/json, text/event-stream
   fg-api-key: "{{fabricKey}}"
   mcp-session-id: "{{mcpSession}}"
 body:
@@ -15,6 +15,7 @@ body:
       "id": 2,
       "method": "tools/list"
     }
+examples: .resources/11b. Tool Search - the same server through Tool Search (3 tools).resources/examples
 order: 11100
 scripts:
   - type: beforeRequest

@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=https://astropods.com/schema/package.json
+spec: blueprint/v1
+name: orders-mcp
+
+agent:
+  build:
+    context: .
+    dockerfile: Dockerfile
+  # Plain HTTP service on port 80: an MCP server (POST /mcp, POST /mcp/readonly) that Fabric fronts as a custom MCP connection.
+  interfaces:
+    frontend: true
+  inputs:
+    - name: MCP_API_KEY
+      datatype: string
+      secret: true
+      description: Callers must send it in the x-api-key header (Fabric adds it as the connection's upstream credential)
+    - name: API_BASE_URL
+      datatype: string
+      description: Base URL of the Orders, Users and Payments APIs
+      optional: true
