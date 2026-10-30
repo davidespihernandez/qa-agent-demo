@@ -1,12 +1,6 @@
 $kind: collection
-description: >-
-  Runs the same fraud-review agent through each path; only the arm changes. Two scenarios: (1) same 21 tools, what changes is Fabric and the model; (2) a 67-tool catalog, what changes is Tool Search. Run requests 1 to 6
-  (or use the Collection Runner), then open request 7 (Compare) and its Visualize tab. Dry run by default: the webhook is not called. baseUrl points at the Fabric route /agent (needs fabricKey); for a local server use http://localhost:8787 and leave fabricKey empty.
+description: "Runs the same fraud-review agent through each path; only the arm changes. Two scenarios: (1) same 21 tools, what changes is Fabric and the model; (2) a 67-tool catalog, what changes is Tool Search. Run requests 1 to 6 (or use the Collection Runner), then open request 7 (Compare) and its Visualize tab. Dry run by default: the webhook is not called. baseUrl points at the Fabric route /agent (needs fabricKey); for a local server use http://localhost:8787 and leave fabricKey empty."
 variables:
-  baseUrl: https://david-esp-s-fabric-team.dp.fabricgateway.ai/agent
-  ordersUrl: https://david-esp-s-fabric-team.dp.fabricgateway.ai/api
-  fabricKey: ""
-  demoKey: ""
   res_A: ""
   res_F: ""
   res_F-eco: ""
