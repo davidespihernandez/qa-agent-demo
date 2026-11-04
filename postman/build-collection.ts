@@ -18,7 +18,7 @@ const test = (arm: string, label = arm) => [
   `  pm.test('Agent flagged exactly the right orders', () => pm.expect(r.verdict).to.eql('pass'));`,
   `  pm.collectionVariables.set('res_${arm}', JSON.stringify({ arm: '${label}', verdict: r.verdict, tools: r.toolCount, steps: r.steps,`,
   '    inTok: r.usage && r.usage.inputTokens, outTok: r.usage && r.usage.outputTokens, cost: r.estimatedCostUsd, sec: Math.round(r.ms / 1000) }));',
-  '  let t = `<style>body{font-family:sans-serif;font-size:14px}td,th{padding:4px 10px;text-align:right}th:first-child,td:first-child{text-align:left}</style>',
+  '  let t = `<style>body{font-family:sans-serif;font-size:14px;background:#fff;color:#111;padding:8px}td,th{padding:4px 10px;text-align:right}th:first-child,td:first-child{text-align:left}</style>',
   '  <h3>Arm ${r.arm}: ${r.title}</h3><p>${r.llm}<br>${r.tools}</p>',
   '  <table><tr><th>Verdict</th><th>Tools sent</th><th>Steps</th><th>Input tokens</th><th>Output tokens</th><th>Est. cost</th><th>Time</th></tr>',
   '  <tr><td>${r.verdict}</td><td>${r.toolCount}</td><td>${r.steps}</td><td>${r.usage && r.usage.inputTokens}</td><td>${r.usage && r.usage.outputTokens}</td><td>$${r.estimatedCostUsd && r.estimatedCostUsd.toFixed(3)}</td><td>${Math.round(r.ms/1000)}s</td></tr></table>`;',
