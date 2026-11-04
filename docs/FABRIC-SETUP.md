@@ -265,7 +265,7 @@ Each route has base path `/<route name>`, API class Anthropic Messages API, endp
 
 The router asks a "decision connection" which tier a prompt needs. The default is Jev. Any HTTP service that answers in the Jev format works, so we run a deterministic one (no LLM: same prompt, same model). Code: `decision-service/`.
 
-1. **Deploy it on Astro.** `cd decision-service`, `ast blueprint push -y -V private`, `ast deploy decision-service --var DEBUG_KEY=<random>`. In the Astro dashboard set the agent to **Public**, then redeploy: Fabric needs the `agents.public.astropods.ai` host (check `GET /health` returns `{"ok":true}`).
+1. **Deploy it on Astro.** `cd decision-service`, `ast blueprint push -y -V private`, `ast deploy david-espi-decision-service --env main --var DEBUG_KEY=@` (see section 10). In the Astro dashboard set the agent to **Public**, then redeploy: Fabric needs the `agents.public.astropods.ai` host (check `GET /health` returns `{"ok":true}`).
 2. **Fabric connection:** Services / Connections > new HTTP connection `decision-rules`, target = the public URL (no trailing slash), upstream auth **Bearer token**, Shared; untick "Create gateway route". Then **Credentials > Upstream credential** for `decision-rules` with any bearer value (the service ignores it). Without a credential the plugin fails in about 1 ms with "Jev decision failed".
 3. **Route:** Routes > New route `anthropic-adaptive-rules`, protocol LLM, connection `anthropic`, base path `/anthropic-adaptive-rules`, gateway key.
 4. **Plugin:** `adaptive-model-router`, name `anthropic-adaptive-rules`, scope **route** `anthropic-adaptive-rules`, Connection `anthropic`, Decision connection `decision-rules`, leave Jev model `jev-1.13.0`.
@@ -313,7 +313,7 @@ Observed 2026-10-29: `tools/list` on `/mcp/github` returns 46 tools, on `/mcp/gi
 
 Fabric can front any MCP server (MCP servers > Connections > Create > Provider **Custom server**), so the Orders, Users and Payments APIs get an MCP front of our own. Code: `mcp-server/` (Bun, stateless JSON-RPC over HTTP; tools are generated from `specs/bridge-tools.json` and `specs/demo-apis.json`; each tool call is the matching HTTP call to `API_BASE_URL`).
 
-1. **Deploy on Astro:** `cd mcp-server`, `ast blueprint push -y -V private`, `ast deploy orders-mcp --vars-file <file with MCP_API_KEY=...>`. Set the agent **Public** in the dashboard and redeploy (pass the key again with `--vars-file`: `--var MCP_API_KEY=@` fails because it is not an account secret). The key goes in `.env` as `ORDERS_MCP_KEY`. Check `GET /health` (`tools: 21`, `readOnlyTools: 8`). Astro passes an unset optional input as an empty string, so the server uses `||`, not `??`, for `API_BASE_URL`.
+1. **Deploy on Astro:** `cd mcp-server`, `ast blueprint push -y -V private`, `ast deploy david-espi-orders-mcp --env main --var MCP_API_KEY=@` (see section 10). Set the agent **Public** in the dashboard and redeploy (pass the key again with `--vars-file`: `--var MCP_API_KEY=@` fails because it is not an account secret). The key goes in `.env` as `ORDERS_MCP_KEY`. Check `GET /health` (`tools: 21`, `readOnlyTools: 8`). Astro passes an unset optional input as an empty string, so the server uses `||`, not `??`, for `API_BASE_URL`.
 2. **Fabric connection:** Provider Custom server, name `orders-mcp`, target `<public url>/mcp`, upstream auth **API key**, header `x-api-key`, **Shared**, value = `ORDERS_MCP_KEY`. Tick "Create gateway route" with Gateway key: the route gets the default path `/mcp/orders-mcp` (not `/mcp/orders`): **arm B**, 21 tools, 6 KB.
 3. **Read-only (arm B-ro):** a second connection to `<public url>/mcp/readonly` (8 GET tools).
 4. **Tool Search (arm C):** a route with the connection(s) and a `tool-search` plugin scoped to that route, embedder as in 8d. Built first as `/mcp/orders-all-search` with `orders-mcp` and `postman` (254 tools); replace the Postman connection with `github` (21 + 46 = 67 tools, prefixed names). A route with two connections prefixes the tool names (`ord__listOrders`) and the route form accepts several connections. Searches such as "get a user by id" rank `ord__getUser` first (0.98).
@@ -364,19 +364,26 @@ Add `MCP_URL_READONLY` / `MCP_URL_SEARCH` (and `FABRIC_KEY_HEADER` if needed) in
 
 ## 10. Astro side (agent deployment), what we learned
 
-Not Fabric, but it decides whether the Fabric arms can run from the deployed agent. Account: `ast whoami` must show
-`davidespi` (personal), never the `postman` org.
+Not Fabric, but it decides whether the Fabric arms can run from the deployed agent.
+
+**Where it runs (since 2026-11-04):** the shared **Astro Corp** org (`ast account switch astro-corp`), not the personal account (it was suspended for billing, which suspended every agent and made the adaptive router silently pass calls through). It is a shared org, so the blueprints are named `david-espi-fraud-agent`, `david-espi-orders-mcp` and `david-espi-decision-service` (the `name:` in each `astropods.yml`).
+Without the Admin role, `ast secrets import` (account vault) is refused. Use **per-environment secrets** instead, which also work on Astro Corp:
 
 ```bash
-cd agent
-ast blueprint push fraud-agent                                  # private blueprint, new build id each push
-ast secrets import --file <a file with only the keys you need>  # then delete that file
-ast blueprint deploy fraud-agent --adapter web \
-  --var ANTHROPIC_API_KEY=@ --var FABRIC_GATEWAY_KEY=@ --var LLM_BASE_URL=@ --var MCP_URL=@ \
-  --var FRAUD_WEBHOOK_URL=@ --var DEMO_API_KEY=@ --wait
-ast agent redeploy --name fraud-agent --build <build id> --wait  # after every push
-ast agent logs --name fraud-agent ; ast agent network --name fraud-agent
+cd agent                                   # or mcp-server, decision-service
+ast blueprint push -y -V private           # must be private: environments do not exist for public blueprints
+ast env create main --blueprint david-espi-fraud-agent
+ast secrets create ANTHROPIC_API_KEY --env main --blueprint david-espi-fraud-agent --value "$ANTHROPIC_API_KEY" --overwrite   # same for FABRIC_GATEWAY_KEY, DEMO_API_KEY, FRAUD_WEBHOOK_URL
+ast deploy david-espi-fraud-agent --env main --vars-file <plain vars: LLM_BASE_URL..., MCP_URL..., FABRIC_*> \
+  --var ANTHROPIC_API_KEY=@ --var FABRIC_GATEWAY_KEY=@ --var DEMO_API_KEY=@ --var FRAUD_WEBHOOK_URL=@ --wait
+ast agent redeploy --name david-espi-fraud-agent --latest --wait   # after every push
+ast agent logs --name david-espi-fraud-agent ; ast agent network --name david-espi-fraud-agent
 ```
+
+Secret names per blueprint: `david-espi-orders-mcp` needs `MCP_API_KEY` (from `ORDERS_MCP_KEY`), `david-espi-decision-service` needs `DEBUG_KEY` (from `DECISION_DEBUG_KEY`), `david-espi-fraud-agent` needs `ANTHROPIC_API_KEY` too (the model input). Delete any temp vars file afterwards.
+
+Gotchas seen: with `ast` 0.32 `ast env create` and `ast blueprint builds list` need the blueprint name; setting the **blueprint** to Public (dashboard) breaks redeploys ("account variable not found") and exposes it to the org, set it back with `ast blueprint set <name> -V private` (the agent's own access setting is the one to change); `--grant` exists on `deploy` only; a suspended account (billing) shows every agent as `suspended`; a push needs a clean git tree for the blueprint files (or `--allow-dirty`).
+After moving org, update the Fabric targets: connection `decision-rules`, connection `orders-mcp` (`<public url>/mcp`) and service `fraud-agent-astro`. Routes, plugins, Postman collections and `.env` do not change.
 
 - **Public HTTP API:** the agent's HTTP surface is the *frontend* interface. In the Astro dashboard open the agent →
   **Configure → Access → Custom app → Public**, then **redeploy**. Only then does the host change to
