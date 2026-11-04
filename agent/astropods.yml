@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://astropods.com/schema/package.json
 spec: blueprint/v1
-name: fraud-agent
+name: david-espi-fraud-agent
 
 agent:
   build:
