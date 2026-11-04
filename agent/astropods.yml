@@ -22,7 +22,7 @@ agent:
       optional: true
     - name: LLM_BASE_URL_ADAPTIVE
       datatype: string
-      description: Fabric LLM route with the adaptive model router, e.g. https://<host>/anthropic-adaptive (arm D)
+      description: Fabric LLM route with the adaptive model router, e.g. https://<host>/anthropic-adaptive-rules (arm D, decision from our own service)
       optional: true
     - name: FABRIC_API_URL
       datatype: string

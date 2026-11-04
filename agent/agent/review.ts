@@ -51,7 +51,7 @@ export const ARMS: Record<Arm, { title: string; llm: string; tools: string; env?
   },
   D: {
     title: 'Fabric + adaptive model router',
-    llm: 'Fabric LLM route with the adaptive-model-router plugin: Jev picks the model for each request',
+    llm: 'Fabric LLM route with the adaptive-model-router plugin: our decision service (rules, no LLM) picks the model for each step',
     tools: 'API calls made in-process by the agent, as in arm A (isolates the router)',
     env: 'LLM_BASE_URL_ADAPTIVE',
   },

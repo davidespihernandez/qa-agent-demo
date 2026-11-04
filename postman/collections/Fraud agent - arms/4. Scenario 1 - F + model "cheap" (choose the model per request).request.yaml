@@ -21,7 +21,8 @@ scripts:
       const show = (r) => {
         pm.test('Agent flagged exactly the right orders', () => pm.expect(r.verdict).to.eql('pass'));
         pm.collectionVariables.set('res_F-cheap', JSON.stringify({ arm: 'F-cheap', verdict: r.verdict, tools: r.toolCount, steps: r.steps,
-          inTok: r.usage && r.usage.inputTokens, outTok: r.usage && r.usage.outputTokens, cost: r.estimatedCostUsd, sec: Math.round(r.ms / 1000) }));
+          inTok: r.usage && r.usage.inputTokens, outTok: r.usage && r.usage.outputTokens, cost: r.estimatedCostUsd, sec: Math.round(r.ms / 1000), models: r.modelsUsed ? Object.keys(r.modelsUsed).join(
+      ) : null }));
         let t = `<style>body{font-family:sans-serif;font-size:14px;background:#fff;color:#111;padding:8px}td,th{padding:4px 10px;text-align:right}th:first-child,td:first-child{text-align:left}</style>
         <h3>Arm ${r.arm}: ${r.title}</h3><p>${r.llm}<br>${r.tools}</p>
         <table><tr><th>Verdict</th><th>Tools sent</th><th>Steps</th><th>Input tokens</th><th>Output tokens</th><th>Est. cost</th><th>Time</th></tr>

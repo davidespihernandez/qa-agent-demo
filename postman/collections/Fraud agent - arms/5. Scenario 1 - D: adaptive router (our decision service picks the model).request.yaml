@@ -1,5 +1,5 @@
 $kind: http-request
-description: "Scenario 2 (big catalog). The tools come from one Fabric MCP route that joins our Orders/Users/Payments server (21 tools) and the GitHub MCP server (46 tools). The model gets all 67 tool definitions on every step. Needs MCP_URL on the agent (route /mcp/orders-all)."
+description: "Scenario 1. Same as F, but the LLM route has the adaptive-model-router plugin and its decision comes from our own rules service (decision-service, on Astro), not an LLM: simple prompts get a cheaper model, harder ones a stronger one, per step. Needs LLM_BASE_URL_ADAPTIVE on the agent."
 url: "{{baseUrl}}/review"
 method: POST
 headers:
@@ -10,7 +10,7 @@ body:
   type: json
   content: |-
     {
-      "arm": "B",
+      "arm": "D",
       "live": false
     }
 scripts:
@@ -19,8 +19,9 @@ scripts:
       // POST /review answers 202 at once; poll /runs/{id} until the review finishes (a review takes 20-60 s).
       const show = (r) => {
         pm.test('Agent flagged exactly the right orders', () => pm.expect(r.verdict).to.eql('pass'));
-        pm.collectionVariables.set('res_B', JSON.stringify({ arm: 'B', verdict: r.verdict, tools: r.toolCount, steps: r.steps,
-          inTok: r.usage && r.usage.inputTokens, outTok: r.usage && r.usage.outputTokens, cost: r.estimatedCostUsd, sec: Math.round(r.ms / 1000) }));
+        pm.collectionVariables.set('res_D', JSON.stringify({ arm: 'D', verdict: r.verdict, tools: r.toolCount, steps: r.steps,
+          inTok: r.usage && r.usage.inputTokens, outTok: r.usage && r.usage.outputTokens, cost: r.estimatedCostUsd, sec: Math.round(r.ms / 1000), models: r.modelsUsed ? Object.keys(r.modelsUsed).join(
+      ) : null }));
         let t = `<style>body{font-family:sans-serif;font-size:14px;background:#fff;color:#111;padding:8px}td,th{padding:4px 10px;text-align:right}th:first-child,td:first-child{text-align:left}</style>
         <h3>Arm ${r.arm}: ${r.title}</h3><p>${r.llm}<br>${r.tools}</p>
         <table><tr><th>Verdict</th><th>Tools sent</th><th>Steps</th><th>Input tokens</th><th>Output tokens</th><th>Est. cost</th><th>Time</th></tr>

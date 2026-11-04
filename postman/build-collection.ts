@@ -8,8 +8,9 @@ const arms: [string, string, string, string, object?][] = [
   ['F', 'F', '2. Scenario 1 - F: through Fabric', 'Scenario 1. Same agent, same task. The LLM and the APIs go through Fabric: the agent only holds a gateway key (fg-api-key), and Fabric adds the real credentials. Same tokens and cost as A, plus traces, analytics and control in Fabric.'],
   ['F-eco', 'F-eco', '3. Scenario 1 - F-eco: Fabric economy route (cheaper model)', 'Scenario 1. Same as F, but the agent calls the economy route, where a Transformer plugin rewrites the model to Haiku 4.5. No agent change. About 67% cheaper in our runs.'],
   ['F-cheap', 'F', '4. Scenario 1 - F + model "cheap" (choose the model per request)', 'Scenario 1. Same as F, but the request asks for the "cheap" model (Haiku 4.5). The agent switches model per request, with no redeploy. Use "expensive" for Sonnet 4.5 or a full model id.', { model: 'cheap' }],
-  ['B', 'B', '5. Scenario 2 - B: all 67 tools sent to the model (baseline)', 'Scenario 2 (big catalog). The tools come from one Fabric MCP route that joins our Orders/Users/Payments server (21 tools) and the GitHub MCP server (46 tools). The model gets all 67 tool definitions on every step. Needs MCP_URL on the agent (route /mcp/orders-all).'],
-  ['C', 'C', '6. Scenario 2 - C: the same 67 tools with Tool Search', 'Scenario 2. Same catalog, but the route has the tool-search plugin: the model sees three tools (search_tool, get_tool, execute_tool) and fetches only the ones it needs. Needs MCP_URL_SEARCH (route /mcp/orders-all-search).'],
+  ['D', 'D', '5. Scenario 1 - D: adaptive router (our decision service picks the model)', 'Scenario 1. Same as F, but the LLM route has the adaptive-model-router plugin and its decision comes from our own rules service (decision-service, on Astro), not an LLM: simple prompts get a cheaper model, harder ones a stronger one, per step. Needs LLM_BASE_URL_ADAPTIVE on the agent.'],
+  ['B', 'B', '6. Scenario 2 - B: all 67 tools sent to the model (baseline)', 'Scenario 2 (big catalog). The tools come from one Fabric MCP route that joins our Orders/Users/Payments server (21 tools) and the GitHub MCP server (46 tools). The model gets all 67 tool definitions on every step. Needs MCP_URL on the agent (route /mcp/orders-all).'],
+  ['C', 'C', '7. Scenario 2 - C: the same 67 tools with Tool Search', 'Scenario 2. Same catalog, but the route has the tool-search plugin: the model sees three tools (search_tool, get_tool, execute_tool) and fetches only the ones it needs. Needs MCP_URL_SEARCH (route /mcp/orders-all-search).'],
 ];
 
 const test = (arm: string, label = arm) => [
@@ -17,7 +18,7 @@ const test = (arm: string, label = arm) => [
   'const show = (r) => {',
   `  pm.test('Agent flagged exactly the right orders', () => pm.expect(r.verdict).to.eql('pass'));`,
   `  pm.collectionVariables.set('res_${arm}', JSON.stringify({ arm: '${label}', verdict: r.verdict, tools: r.toolCount, steps: r.steps,`,
-  '    inTok: r.usage && r.usage.inputTokens, outTok: r.usage && r.usage.outputTokens, cost: r.estimatedCostUsd, sec: Math.round(r.ms / 1000) }));',
+  '    inTok: r.usage && r.usage.inputTokens, outTok: r.usage && r.usage.outputTokens, cost: r.estimatedCostUsd, sec: Math.round(r.ms / 1000), models: r.modelsUsed ? Object.keys(r.modelsUsed).join(', ') : null }));',
   '  let t = `<style>body{font-family:sans-serif;font-size:14px;background:#fff;color:#111;padding:8px}td,th{padding:4px 10px;text-align:right}th:first-child,td:first-child{text-align:left}</style>',
   '  <h3>Arm ${r.arm}: ${r.title}</h3><p>${r.llm}<br>${r.tools}</p>',
   '  <table><tr><th>Verdict</th><th>Tools sent</th><th>Steps</th><th>Input tokens</th><th>Output tokens</th><th>Est. cost</th><th>Time</th></tr>',
@@ -78,14 +79,14 @@ writeFileSync(
   [
     '$kind: collection',
     'description: >-',
-    '  Runs the same fraud-review agent through each path; only the arm changes. Two scenarios: (1) same 21 tools, what changes is Fabric and the model; (2) a 67-tool catalog, what changes is Tool Search. Run requests 1 to 6',
-    '  (or use the Collection Runner), then open request 7 (Compare) and its Visualize tab. Dry run by default: the webhook is not called. baseUrl points at the Fabric route /agent (needs fabricKey); for a local server use http://localhost:8787 and leave fabricKey empty.',
+    '  Runs the same fraud-review agent through each path; only the arm changes. Two scenarios: (1) same 21 tools, what changes is Fabric and the model; (2) a 67-tool catalog, what changes is Tool Search. Run requests 1 to 7',
+    '  (or use the Collection Runner), then open request 8 (Compare) and its Visualize tab. Dry run by default: the webhook is not called. baseUrl points at the Fabric route /agent (needs fabricKey); for a local server use http://localhost:8787 and leave fabricKey empty.',
     'variables:',
     '  baseUrl: https://david-esp-s-fabric-team.dp.fabricgateway.ai/agent',
     '  ordersUrl: https://david-esp-s-fabric-team.dp.fabricgateway.ai/api',
     '  fabricKey: ""',
     '  demoKey: ""',
-    ...['A', 'F', 'F-eco', 'F-cheap', 'B', 'C'].map((k) => `  res_${k}: ""`),
+    ...['A', 'F', 'F-eco', 'F-cheap', 'D', 'B', 'C'].map((k) => `  res_${k}: ""`),
   ].join('\n') + '\n',
 );
 
@@ -114,6 +115,6 @@ request(400, 'D4. Orders - new order from an unknown customer', 'POST', '/orders
 request(500, 'D5. Orders - repeated order (send it 3 times)', 'POST', '/orders', 'Send this three times: 3 identical orders from the same customer get flagged.', order('usr-003', 42), undefined, O);
 request(1000, '0. What does each arm change', 'GET', '/arms', 'Plain-English description of every arm and whether it is configured on this server.');
 arms.forEach(([key, arm, name, desc, extra], i) => request(2000 + i * 1000, name, 'POST', '/review', desc, { arm, ...extra, live: false }, test(key, key)));
-request(8000, '7. Compare: cost per review, worst to best', 'GET', '/arms', 'Send requests 1 to 6 first, then open the Visualize tab: one table per scenario, sorted from the most to the least expensive arm, with the saving against the baseline. The tests fail if an arm gave a wrong answer or if a change does not save what it should.', undefined, compareTest);
-request(9000, '8. LIVE - fire the Postman webhook', 'POST', '/review', 'Only for the show-and-tell. Sends one alert per fraudulent order to the Flow webhook (Idempotency-Key header).', { arm: 'F', live: true });
+request(8000, '8. Compare: cost per review, worst to best', 'GET', '/arms', 'Send requests 1 to 7 first, then open the Visualize tab: one table per scenario, sorted from the most to the least expensive arm, with the saving against the baseline. The tests fail if an arm gave a wrong answer or if a change does not save what it should.', undefined, compareTest);
+request(9000, '9. LIVE - fire the Postman webhook', 'POST', '/review', 'Only for the show-and-tell. Sends one alert per fraudulent order to the Flow webhook (Idempotency-Key header).', { arm: 'F', live: true });
 console.log('written', dir);
