@@ -20,7 +20,7 @@ scripts:
       ];
       const money = c => c == null ? 'n/a' : '$' + c.toFixed(3);
       const kt = n => n == null ? '' : (n / 1000).toFixed(1) + 'k';
-      let html = '<style>body{font-family:sans-serif;font-size:12px;background:#fff;color:#111;padding:8px}h2{font-size:15px;margin:4px 0}h3{font-size:13px;margin:14px 0 6px}table{border-collapse:collapse;width:100%;table-layout:fixed}td,th{overflow-wrap:anywhere;padding:3px 4px;text-align:right;border-bottom:1px solid #ddd;vertical-align:top}th:first-child,td:first-child,td.l,th.l{text-align:left}.bar{background:#ff6c37;height:12px;border-radius:2px}.good{color:#1a7f37;font-weight:bold}.same{color:#666}.bad{color:#b42318;font-weight:bold}small{color:#666}</style><h2>What does each change cost? Worst to best, per scenario</h2>';
+      let html = '<style>body{font-family:sans-serif;font-size:12px;background:#fff;color:#111;padding:8px}h2{font-size:15px;margin:4px 0}h3{font-size:13px;margin:14px 0 6px}table{border-collapse:collapse;width:100%;table-layout:fixed}table,td,th{font:12px sans-serif}td,th{overflow-wrap:anywhere;padding:3px 4px;text-align:right;border-bottom:1px solid #ddd;vertical-align:top}th:first-child,td:first-child,td.l,th.l{text-align:left}.bar{background:#ff6c37;height:12px;border-radius:2px}.good{color:#1a7f37;font-weight:bold}.same{color:#666}.bad{color:#b42318;font-weight:bold}small{color:#666}</style><h2>What does each change cost? Worst to best, per scenario</h2>';
       const all = {};
       scenarios.forEach(s => {
         const rows = s.arms.map(([key, what]) => ({ key, what, r: get(key) }));
