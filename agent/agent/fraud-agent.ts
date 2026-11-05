@@ -211,10 +211,31 @@ export async function createFraudAgent(
   onDelivery?: (d: Delivery) => void,
 ) {
   const runId = randomUUID();
-  const mcp = cfg.mcpUrl ? new MCPClient({ id: 'fraud-apis', servers: { apis: mcpServerDef(cfg) } }) : undefined;
-  const apiToolset = mcp ? await mcp.listTools() : apiTools(cfg);
+  let mcp: MCPClient | undefined;
+  let apiToolset: Awaited<ReturnType<MCPClient['listTools']>> | ReturnType<typeof apiTools>;
+  if (cfg.mcpUrl) {
+    // The MCP client gives the route only 3 s to answer its first message ("Version negotiation probe timed out").
+    // When the Fabric MCP route is slow it connects to nothing, and Mastra carries on with zero tools. So: wake the
+    // route with a plain request that may take longer, then connect, and try again a few times before giving up.
+    const def = mcpServerDef(cfg);
+    apiToolset = {};
+    for (let attempt = 1; attempt <= 5 && Object.keys(apiToolset).length === 0; attempt++) {
+      await fetch(def.url, {
+        method: 'POST',
+        headers: { ...def.requestInit.headers, 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 0, method: 'initialize', params: { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'warmup', version: '1' } } }),
+        signal: AbortSignal.timeout(15000),
+      }).then((r) => r.arrayBuffer()).catch(() => {});
+      mcp = new MCPClient({ id: 'fraud-apis', servers: { apis: def } });
+      apiToolset = await mcp.listTools();
+      if (Object.keys(apiToolset).length === 0) {
+        await mcp.disconnect().catch(() => {});
+        if (attempt < 5) await new Promise((r) => setTimeout(r, 1000 * attempt));
+      }
+    }
+  } else apiToolset = apiTools(cfg);
   // Mastra logs MCP connection errors and carries on with zero tools: fail loudly instead of running a blind agent.
-  if (mcp && Object.keys(apiToolset).length === 0) throw new Error(`No tools came back from the MCP server ${cfg.mcpUrl}`);
+  if (cfg.mcpUrl && Object.keys(apiToolset).length === 0) throw new Error(`No tools came back from the MCP server ${cfg.mcpUrl} (5 attempts)`);
   const tools = { ...apiToolset, report_fraud: reportFraudTool(cfg, runId, onReport, onDelivery) };
   const agent = new Agent({
     id: 'fraud-agent',

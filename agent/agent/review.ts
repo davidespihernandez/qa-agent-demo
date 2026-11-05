@@ -107,6 +107,10 @@ const MODEL_PRICES: [string, { in: number; out: number }][] = [
   ['claude-sonnet-4-5', { in: 3, out: 15 }],
   ['claude-haiku-4-5', { in: 1, out: 5 }],
   ['claude-opus-4-5', { in: 5, out: 25 }],
+  // Claude 5.5 family, from platform.claude.com/docs/en/about-claude/pricing (Haiku 5.5: prompts up to 100k tokens).
+  ['claude-sonnet-5-5', { in: 2, out: 10 }],
+  ['claude-opus-5-5', { in: 4, out: 20 }],
+  ['claude-haiku-5-5', { in: 0.1, out: 0.5 }],
 ];
 
 /** What each step really ran on (the router may change the model per request) and what that cost. */
