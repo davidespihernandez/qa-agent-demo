@@ -9,7 +9,7 @@ const scenarios = [
 ];
 const money = c => c == null ? 'n/a' : '$' + c.toFixed(3);
 const kt = n => n == null ? '' : (n / 1000).toFixed(1) + 'k';
-let html = '<style>body{font-family:sans-serif;font-size:12px;background:#fff;color:#111;padding:8px}h3{margin:18px 0 6px}table{border-collapse:collapse}table{width:100%}td,th{padding:4px 6px;text-align:right;border-bottom:1px solid #ddd;vertical-align:top}td.l{max-width:230px}th:first-child,td:first-child,td.l,th.l{text-align:left}.bar{background:#ff6c37;height:12px;border-radius:2px}.good{color:#1a7f37;font-weight:bold}.same{color:#666}.bad{color:#b42318;font-weight:bold}small{color:#666}</style><h2>What does each change cost? Worst to best, per scenario</h2>';
+let html = '<style>body{font-family:sans-serif;font-size:12px;background:#fff;color:#111;padding:8px}h2{font-size:15px;margin:4px 0}h3{font-size:13px;margin:14px 0 6px}table{border-collapse:collapse;width:100%;table-layout:fixed}td,th{overflow-wrap:anywhere;padding:3px 4px;text-align:right;border-bottom:1px solid #ddd;vertical-align:top}th:first-child,td:first-child,td.l,th.l{text-align:left}.bar{background:#ff6c37;height:12px;border-radius:2px}.good{color:#1a7f37;font-weight:bold}.same{color:#666}.bad{color:#b42318;font-weight:bold}small{color:#666}</style><h2>What does each change cost? Worst to best, per scenario</h2>';
 const all = {};
 scenarios.forEach(s => {
   const rows = s.arms.map(([key, what]) => ({ key, what, r: get(key) }));
@@ -17,11 +17,11 @@ scenarios.forEach(s => {
   const base = (rows.find(x => x.key === s.base) || {}).r;
   const done = rows.filter(x => x.r && x.r.cost != null).sort((a, b) => b.r.cost - a.r.cost);
   const max = done.length ? done[0].r.cost : 1;
-  html += `<h3>${s.title}</h3><table><tr><th class="l">Arm</th><th class="l">What it is</th><th>Tools</th><th>Input</th><th>Steps</th><th>Time</th><th>Correct?</th><th class="l">Cost</th><th>Saving</th></tr>`;
+  html += `<h3>${s.title}</h3><table><colgroup><col style="width:7%"><col style="width:27%"><col style="width:7%"><col style="width:8%"><col style="width:7%"><col style="width:7%"><col style="width:9%"><col style="width:14%"><col style="width:14%"></colgroup><tr><th class="l">Arm</th><th class="l">What it is</th><th>Tools</th><th>Input</th><th>Steps</th><th>Time</th><th>OK?</th><th class="l">Cost</th><th>Saving</th></tr>`;
   done.forEach(x => {
     const r = x.r, d = base && base.cost ? (1 - r.cost / base.cost) * 100 : null;
     const sv = x.key === s.base ? '<span class="same">baseline</span>' : d == null ? '' : Math.abs(d) < 5 ? '<span class="same">about the same</span>' : d > 0 ? `<span class="good">${d.toFixed(0)}% cheaper</span>` : `<span class="bad">${(-d).toFixed(0)}% more</span>`;
-    html += `<tr><td><b>${x.key}</b></td><td class="l">${x.what}</td><td>${r.tools}</td><td>${kt(r.inTok)}</td><td>${r.steps}</td><td>${r.sec}s</td><td>${r.verdict === 'pass' ? 'yes' : '<span class="bad">NO</span>'}</td><td class="l"><div class="bar" style="width:${Math.max(4, Math.round(r.cost / max * 70))}px"></div>${money(r.cost)}</td><td>${sv}</td></tr>`;
+    html += `<tr><td><b>${x.key}</b></td><td class="l">${x.what}</td><td>${r.tools}</td><td>${kt(r.inTok)}</td><td>${r.steps}</td><td>${r.sec}s</td><td>${r.verdict === 'pass' ? 'yes' : '<span class="bad">NO</span>'}</td><td class="l"><div class="bar" style="width:${Math.max(4, Math.round(r.cost / max * 100))}%"></div>${money(r.cost)}</td><td>${sv}</td></tr>`;
   });
   rows.filter(x => x.r && x.r.cost == null).forEach(x => {
     const r = x.r;
