@@ -61,6 +61,24 @@ bun harness/run.ts --arm A --runs 3     # from the repo root
 
 Arms and their status (the legend in FABRIC-SETUP.md marks what was verified in production): A direct, F through Fabric, F-eco economy route, D adaptive router, B all 67 tools, C Tool Search. DEMO.md has the 50-minute talk track.
 
+## Using the Postman collections
+
+The collections in `postman/collections/` are Postman v3 (YAML) files. `.postman/resources.yaml` links them to **the author's** workspace and cloud objects (workspace id, collection, environment and spec ids). Three ways to use them, from least to most involved:
+
+1. **Run them from the CLI, with nothing linked.** Clone the repo and run a collection straight from the folder. No workspace needed:
+
+   ```bash
+   postman collection run "postman/collections/Fabric features" -e my-env.json
+   ```
+
+   `my-env.json` is a Postman environment file with `fabricKey` (secret) and, for the arms collection, `baseUrl`, `ordersUrl` and `demoKey`. Never commit it. Use `-i "<request name>"` (repeatable) to run only some requests.
+
+2. **See them in the Postman app: work on your own copy of the repo.** Fork the repo (or copy it into your own repository), then connect a workspace of yours to it with Postman's native Git integration. Connecting rewrites `.postman/resources.yaml` with your workspace id and your cloud ids. We have not verified how Postman handles the author's ids that are already in that file, so if it complains, delete `.postman/` in your copy and connect again.
+
+3. **Do not push to the original repo from a clone that points at your workspace.** If you commit your `.postman/resources.yaml` there, the original repo ends up pointing at your workspace and breaks the author's sync. Do not commit it back; contribute changes through a pull request that leaves `.postman/` untouched.
+
+**Careful when you run the whole `Fraud agent - arms` collection.** It includes `D1. RESET orders` (deletes every order except two) and `9. LIVE` (fires the Flow webhook). Run requests 0 to 8, or pick requests with `-i`. The orders API is a shared, in-memory test API: other people's resets and new orders change what your agent sees, so run `D1` before you start a demo.
+
 ## Things tied to the author's setup
 
 - Collections and environments committed in `postman/` use the author's tenant host. Override them as in Level 1.
