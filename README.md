@@ -5,7 +5,10 @@ A fraud-investigation agent that reviews orders and reports suspicious ones to a
 - **Astro** (Astropods): build, run, deploy and observe the agent.
 - **Fabric Gateway**: one governed entry point for the agent's LLM and API calls (simple authentication, model control, observability).
 
-> Status: the demo covers build (Astro), gateway (Fabric) and observability. Token-saving plugins (adaptive router, Tool Search) are measured as "next steps". See [DEMO.md](DEMO.md) for the talk track and [docs/FABRIC-SETUP.md](docs/FABRIC-SETUP.md) for the Fabric configuration.
+> Status: the demo covers build (Astro), gateway (Fabric) and observability. Token-saving plugins (adaptive router, Tool Search) are measured as "next steps".
+>
+> **Want to run it yourself? Start with [docs/GETTING-STARTED.md](docs/GETTING-STARTED.md).** Then [docs/FABRIC-SETUP.md](docs/FABRIC-SETUP.md) (the Fabric configuration, step by step) and [DEMO.md](DEMO.md) (the talk track).
+> Related: [decision-service/](decision-service/README.md) (our own decision service for the adaptive router) and [lightyear-bench](https://github.com/davidespihernandez/lightyear-bench) (measure Lightyear's token savings on long coding-agent sessions).
 
 ## The idea
 
@@ -30,6 +33,7 @@ The policy is plain English (`agent/agent/fraud-policy.md`): flag orders over $1
 | F | Fabric `/anthropic` and `/api` | one gateway key, tools stay in the agent |
 | F-eco | Fabric `/anthropic-select` | service only allows Haiku 4.5 and Sonnet 4.5; agent asks for Haiku |
 | D | Fabric `/anthropic-adaptive` | adaptive router (decision service Jev); picks Haiku for trivial prompts, Opus 5.5 for our review task |
+| B-ro | Fabric MCP route with only the 8 read-only tools | same as B, fewer tools |
 | B | Fabric MCP route `/mcp/orders-all` (our own MCP server, 21 tools, plus GitHub MCP, 46 tools) | all 67 tool definitions go to the model on every step |
 | C | Same 67 tools behind Tool Search (`/mcp/orders-all-search`) | the model sees 3 tools and searches for the rest |
 | D2 | Fabric `/anthropic-adaptive-rules` | adaptive router with our own decision service |
@@ -53,12 +57,16 @@ Every run is checked by an oracle: the agent passes only if the set of flagged o
 
 ## Run it
 
+Short version (local, arm A):
+
 ```bash
-cp .env.example .env     # fill in keys; never commit .env
-cd agent && bun install
+cp .env.example .env     # fill in ANTHROPIC_API_KEY; never commit .env
+cd agent && bun install && cd ..
 ast dev                   # local playground and POST /review
 bun harness/run.ts --arm A --runs 3      # from the repo root
 ```
+
+For the Fabric arms, the Fabric features collection and the Astro deployment, follow [docs/GETTING-STARTED.md](docs/GETTING-STARTED.md).
 
 ## License
 

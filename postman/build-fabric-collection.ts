@@ -5,6 +5,10 @@
 import { mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+// Data-plane host of your Fabric tenant (set FABRIC_HOST in .env; see docs/GETTING-STARTED.md).
+const FABRIC_HOST = (process.env.FABRIC_HOST || 'https://<your-tenant>.dp.fabricgateway.ai').replace(/\/+$/, '');
+
+
 const dir = join(import.meta.dir, 'collections', 'Fabric features');
 mkdirSync(join(dir, '.resources'), { recursive: true });
 for (const f of readdirSync(dir)) if (f.endsWith('.request.yaml') && !/^(2a|4[a-e]|11[a-e])\./.test(f)) rmSync(join(dir, f));
@@ -95,7 +99,7 @@ writeFileSync(join(dir, '.resources', 'definition.yaml'), [
   '  the adaptive model router, cost side by side, traces, and rate limiting. Set fabricKey (a Fabric consumer key) and run the requests in order.',
   '  Each request has a test, so the Collection Runner shows what Fabric did. MCP route and tool control will be added once the plugin is available.',
   'variables:',
-  '  fabricUrl: https://david-esp-s-fabric-team.dp.fabricgateway.ai',
+  `  fabricUrl: ${FABRIC_HOST}`,
   '  fabricKey: ""',
   '  rateLimitRoute: /anthropic-ratelimit',
   '  cost_anthropic: ""',

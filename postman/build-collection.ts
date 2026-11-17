@@ -2,6 +2,10 @@
 import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+// Data-plane host of your Fabric tenant (set FABRIC_HOST in .env; see docs/GETTING-STARTED.md).
+const FABRIC_HOST = (process.env.FABRIC_HOST || 'https://<your-tenant>.dp.fabricgateway.ai').replace(/\/+$/, '');
+
+
 // [key, arm sent to the agent, request name, description, extra body fields]
 const arms: [string, string, string, string, object?][] = [
   ['A', 'A', '1. Scenario 1 - A: direct to Anthropic (baseline)', 'Scenario 1 (21 tools). The agent calls Anthropic and the APIs itself, with the real Anthropic key inside the agent. Nothing in between: the baseline (Sonnet 4.5).'],
@@ -82,8 +86,8 @@ writeFileSync(
     '  Runs the same fraud-review agent through each path; only the arm changes. Two scenarios: (1) same 21 tools, what changes is Fabric and the model; (2) a 67-tool catalog, what changes is Tool Search. Run requests 1 to 7',
     '  (or use the Collection Runner), then open request 8 (Compare) and its Visualize tab. Dry run by default: the webhook is not called. baseUrl points at the Fabric route /agent (needs fabricKey); for a local server use http://localhost:8787 and leave fabricKey empty.',
     'variables:',
-    '  baseUrl: https://david-esp-s-fabric-team.dp.fabricgateway.ai/agent',
-    '  ordersUrl: https://david-esp-s-fabric-team.dp.fabricgateway.ai/api',
+    `  baseUrl: ${FABRIC_HOST}/agent`,
+    `  ordersUrl: ${FABRIC_HOST}/api`,
     '  fabricKey: ""',
     '  demoKey: ""',
     ...['A', 'F', 'F-eco', 'F-cheap', 'D', 'B', 'C'].map((k) => `  res_${k}: ""`),

@@ -13,6 +13,19 @@ refer to the URLs these names produce.
 
 Legend: **bold** = a value you type or select. `code` = exact text.
 
+**Reading order.** The sections are not numbered in the order you do them (7b comes after 8 for historical reasons). Do them like this:
+
+| Goal | Sections |
+|---|---|
+| Fabric basics (needed by everything) | 0, 1, 2 |
+| `Fabric features` collection | 7b (and 8, 8c for the adaptive router) |
+| Agent through Fabric (arms F, F-eco) | 3, then 9 |
+| MCP arms (B, B-ro, C) | 4 to 6, or 8d and 8e (our own MCP server), then 9 |
+| Agent deployed on Astro | 10 |
+| Optional extras | 7, 8, 8f (Lightyear, not part of the demo) |
+
+See also [GETTING-STARTED.md](GETTING-STARTED.md) for the overall path.
+
 ---
 
 ## 0. Before you start (5 min)

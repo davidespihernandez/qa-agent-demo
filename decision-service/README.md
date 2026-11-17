@@ -98,6 +98,20 @@ Observed on 2026-10-27, not a documented contract (the thresholds live inside th
 - Whether customers get access to Jev is unconfirmed.
 - The tier-to-model map and the thresholds are observations.
 
-## Run and deploy
+## On Astro
 
-Locally: `PORT=8080 bun server.ts`. Deploy on Astro and wire it into Fabric (connection, credential, route, plugin): `docs/FABRIC-SETUP.md`, section 8c.
+The service is a plain HTTP server, with nothing Astro-specific in the code (`server.ts`, Bun, port 80). Astro is just where we host it: it builds the container, gives it a public URL, keeps the logs and holds the secret.
+
+- **Packaging:** `Dockerfile` (Bun image, runs `server.ts` on port 80) and `astropods.yml` (the Astro blueprint). The blueprint exposes the HTTP interface (`interfaces.frontend: true`) and one optional secret, `DEBUG_KEY`, for the `/debug` endpoints.
+- **Deploy** (details and the exact commands: `docs/FABRIC-SETUP.md`, sections 8c and 10):
+  1. `ast blueprint push -y -V private` from this folder (private, because environments do not exist for public blueprints).
+  2. `ast deploy <your-name>-decision-service --env main --var DEBUG_KEY=@`.
+  3. In the Astro dashboard, set the agent to **Public** and redeploy. Fabric's data plane calls the service from outside Astro, so it needs the public host (`agents.public.astropods.ai`). Check that `GET /health` returns `{"ok":true}`.
+  4. In Fabric, create an HTTP connection to that URL, a route, and the `adaptive-model-router` plugin pointing at it (section 8c).
+- **Logs:** `ast agent logs --name <your-name>-decision-service`. Every request the plugin sends is also logged as JSON, and `GET /debug/requests` shows the last 50.
+- **Rename it:** `name:` in `astropods.yml` is the author's (`david-espi-decision-service`). Use your own name.
+- **Anywhere else:** because it is just HTTP, it runs on any host the Fabric data plane can reach (a container service, a VM, your own cluster). If Fabric's data plane is in the customer's VPC, the service can live there too.
+
+## Run locally
+
+`PORT=8080 bun server.ts`, then the `curl` example above.
