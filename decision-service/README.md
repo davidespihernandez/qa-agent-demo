@@ -109,7 +109,7 @@ The service is a plain HTTP server, with nothing Astro-specific in the code (`se
   3. In the Astro dashboard, set the agent to **Public** and redeploy. Fabric's data plane calls the service from outside Astro, so it needs the public host (`agents.public.astropods.ai`). Check that `GET /health` returns `{"ok":true}`.
   4. In Fabric, create an HTTP connection to that URL, a route, and the `adaptive-model-router` plugin pointing at it (section 8c).
 - **Logs:** `ast agent logs --name <your-name>-decision-service`. Every request the plugin sends is also logged as JSON, and `GET /debug/requests` shows the last 50.
-- **Rename it:** `name:` in `astropods.yml` is the author's (`david-espi-decision-service`). Use your own name.
+- **Name:** `name:` in `astropods.yml` is `your-name-decision-service`. Replace `your-name` with your own prefix before you deploy (see below).
 - **Anywhere else:** because it is just HTTP, it runs on any host the Fabric data plane can reach (a container service, a VM, your own cluster). If Fabric's data plane is in the customer's VPC, the service can live there too.
 
 ## Run locally
