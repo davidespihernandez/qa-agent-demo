@@ -277,7 +277,7 @@ What it expects back is exactly the documented Jev shape: `{model, answers, usag
 How the tier becomes a model (observed 2026-10-27): `fast` = claude-haiku-5-5, `balanced` = claude-sonnet-5-5, `advanced` = claude-opus-5-5. The other answers escalate it (observed by forcing one answer at a time with `POST /debug/override`, same prompt "Say hi"): from `fast`, `deep_reasoning` 0.8 gives Sonnet and 0.95 gives Opus (0.65 and below change nothing); `underspecified` 0.95 and `blast_radius` High (2) each move one step up (0.8 and Medium do not). The thresholds are tuned inside the plugin, so treat them as observations, not a contract. `reasoning` maps to a model our Anthropic workspace cannot call (rate limit 0), so the service never returns it. The rules live in `pickTier` in `decision-service/server.ts` (keywords and length), change them and redeploy to change the routing.
 
 Seen while building them: plugins can take seconds, once about ten minutes, to apply after saving (a 502 or 404 right after a save is not necessarily a bug); the `llm-router` target dropdown lists only the services attached to the route; the rate-limit counter is not instant; the validator's 422 body is `{"error":"validation_failed"}` without the custom message. Collection check: `postman collection run "postman/collections/Fabric features" -e <env with fabricKey>`.
-Other plugins in the catalog, not used yet: `token-counter`, `agent-audit`, `access-log` (global, observational), and `llm-router` modes loadbalance and lightyear.
+Other plugins in the catalog, not used yet: `token-counter`, `agent-audit`, `access-log` (global, observational), and `llm-router` modes loadbalance and lightyear (see 8f).
 
 ### 8d. Tool Search on an existing MCP server (GitHub MCP) ✅
 
@@ -324,6 +324,10 @@ Fabric can front any MCP server (MCP servers > Connections > Create > Provider *
 **Known issue:** the Fabric route to the Postman MCP server flapped (see 8d), so combined routes with Postman were unreliable; the demo no more uses Postman MCP.
 
 ---
+
+### 8f. Lightyear (tested 2026-11-16, NOT part of the demo)
+
+Lightyear is a mode of the `llm-router` plugin (preview; built for long coding-agent sessions; Anthropic, OpenAI and Gemini routes only). We tried it as an arm of this agent (arm F with the route `/anthropic-lightyear`: route with connection `anthropic` and base path `/anthropic-lightyear`, plugin `llm-router` mode `lightyear` scoped to that route, client credentials off) and removed the arm. 5 alternated runs each, same model and 6 orders: F passed 5/5 at a median $0.069 and 18 s (4 steps); L passed 4/5 at a median $0.173 and 57 s (5 to 15 steps, worst run $0.448), and neither used the prompt cache. A short loop with our own tools is not what Lightyear is for. The route and plugin can stay in the tenant for the Claude Code test.
 
 ## 9. Point the repo at the new tenant
 
