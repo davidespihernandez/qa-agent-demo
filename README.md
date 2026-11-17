@@ -1,14 +1,39 @@
 # fraud-agent demo (Astro + Fabric Gateway)
 
-A fraud-investigation agent that reviews orders and reports suspicious ones to a Postman Flow. Built to demo:
+A fraud-investigation agent that reviews orders and reports suspicious ones to a Postman Flow, used to demo two Postman products working together:
 
 - **Astro** (Astropods): build, run, deploy and observe the agent.
-- **Fabric Gateway**: one governed entry point for the agent's LLM and API calls (simple authentication, model control, observability).
+- **Fabric Gateway**: one governed entry point for the agent's LLM calls, APIs and MCP tools: authentication, model control, observability and token savings.
 
-> Status: the demo covers build (Astro), gateway (Fabric) and observability. Token-saving plugins (adaptive router, Tool Search) are measured as "next steps".
->
-> **Want to run it yourself? Start with [docs/GETTING-STARTED.md](docs/GETTING-STARTED.md).** Then [docs/FABRIC-SETUP.md](docs/FABRIC-SETUP.md) (the Fabric configuration, step by step) and [DEMO.md](DEMO.md) (the talk track).
-> Related: [decision-service/](decision-service/README.md) (our own decision service for the adaptive router) and [lightyear-bench](https://github.com/davidespihernandez/lightyear-bench) (measure Lightyear's token savings on long coding-agent sessions).
+This repository has everything to reproduce the demo: the agent code, the Postman collections, the small services that run on Astro, the step-by-step Fabric configuration and the scripts to measure the cost of each setup.
+
+## Where to start
+
+| I want to... | Go to |
+|---|---|
+| Run the demo myself, from zero | [docs/GETTING-STARTED.md](docs/GETTING-STARTED.md) |
+| Configure Fabric (connections, routes, plugins), step by step | [docs/FABRIC-SETUP.md](docs/FABRIC-SETUP.md) |
+| Use the Postman collections | [docs/GETTING-STARTED.md#using-the-postman-collections](docs/GETTING-STARTED.md#using-the-postman-collections) |
+| Understand the adaptive router's decision service | [decision-service/README.md](decision-service/README.md) |
+| Measure Lightyear's token savings on coding agents | [lightyear-bench](https://github.com/davidespihernandez/lightyear-bench) (separate repo) |
+
+## What is in this repository
+
+| Path | What it contains |
+|---|---|
+| [`postman/collections/Fabric features/`](postman/collections) | Postman collection with 31 requests that show Fabric on its own (no agent): one entry point and one gateway key, Transformer plugin, model allowlist, adaptive router (Jev and our own decision service), cost side by side, traces, rate and token limits, validator, PII redaction, fallback, and Tool Search on an MCP server. Each request has a test. |
+| [`postman/collections/Fraud agent - arms/`](postman/collections) | Postman collection with 16 requests that run the same fraud review through each arm (see below), reset the demo data, and a Compare request with a visualization of the cost of each arm. |
+| `postman/environments/`, `postman/globals/` | The Postman environment and globals the collections use. They point at the author's tenant; see the guide to override them. |
+| `postman/build-*.ts` | Scripts that generate the collections. The committed collections come from Postman's Git sync, so regenerating them overwrites that state. |
+| [`agent/`](agent/README.md) | The fraud agent (Mastra, TypeScript, Bun), its HTTP API (`POST /review`, `GET /runs/{id}`, `GET /arms`), the plain-English fraud policy, the oracle that checks the result, and the Astro blueprint (`astropods.yml`). |
+| [`mcp-server/`](mcp-server) | A small MCP server (Bun, runs on Astro) that turns the Orders, Users and Payments APIs into 21 MCP tools (`/mcp`) or the 8 read-only ones (`/mcp/readonly`). It stands in for the `mcp-http-bridge` plugin. |
+| [`decision-service/`](decision-service/README.md) | A small deterministic HTTP service (Bun, runs on Astro) that answers the adaptive router's questions with plain rules instead of Jev. |
+| `harness/` | Runs one or more arms from the command line and scores them: `bun harness/run.ts --arm F-eco --runs 3`, and `compare.ts` to compare results. |
+| `scripts/` | `seed.ts` (create the labeled demo orders), `mcp-probe.ts` (check an MCP route), `dump-bridge-tools.ts` (dump the tools the bridge exposes). |
+| [`docs/`](docs) | `GETTING-STARTED.md`, `FABRIC-SETUP.md`, `webhook-contract.md` (the fraud alert the agent sends), `PLAN.md` (the original plan, kept for history). |
+| `results/` | Where the harness writes its runs (not committed). |
+
+The Orders, Users and Payments APIs the agent reviews are a fake, in-memory test API (shared, with a default URL in `agent/agent/specs/demo-apis.json`).
 
 ## The idea
 
@@ -42,27 +67,14 @@ The Postman collection `Fraud agent - arms` compares them in two scenarios, each
 
 Every run is checked by an oracle: the agent passes only if the set of flagged orders equals the set computed from the data.
 
-## Layout
-
-| Path | What |
-|---|---|
-| `agent/` | the agent (Mastra), its HTTP API (`POST /review`) and `astropods.yml` |
-| `harness/` | runs one or more arms: `bun harness/run.ts --arm F-eco --runs 3` |
-| `postman/` | two collections: `Fraud agent - arms` (every arm, data-reset requests, the Flow webhook; built by `build-collection.ts`) and `Fabric features` (26 requests that show Fabric on its own: auth, Transformer, allowlist, adaptive router, cost, traces, rate limits, validator, PII, fallback; built by `build-fabric-collection.ts`) |
-| `mcp-server/` | a small MCP server (Bun, on Astro) that turns the Orders, Users and Payments APIs into 21 MCP tools (`/mcp`) or the 8 read-only ones (`/mcp/readonly`); stands in for the missing `mcp-http-bridge`; see section 8e of `docs/FABRIC-SETUP.md` |
-| `decision-service/` | a small deterministic HTTP service (Bun, deployed on Astro) that answers the adaptive router's questions with plain rules instead of Jev; see `docs/FABRIC-SETUP.md` section 8c |
-| `scripts/` | seed data, tool dump, MCP probe |
-| `docs/` | Fabric setup guide, webhook contract, plan |
-| `results/` | saved harness runs |
-
 ## Run it
 
-Short version (local, arm A):
+Short version (local, arm A, only an Anthropic key):
 
 ```bash
 cp .env.example .env     # fill in ANTHROPIC_API_KEY; never commit .env
 cd agent && bun install && cd ..
-ast dev                   # local playground and POST /review
+ast dev                   # local playground and POST /review (needs the Astro CLI)
 bun harness/run.ts --arm A --runs 3      # from the repo root
 ```
 

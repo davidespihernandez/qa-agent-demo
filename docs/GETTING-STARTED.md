@@ -59,7 +59,7 @@ bun harness/run.ts --arm A --runs 3     # from the repo root
 3. Deploy to Astro: section 10. Before you deploy, **replace `your-name`** in the blueprint names (`name:` in `agent/astropods.yml`, `mcp-server/astropods.yml` and `decision-service/astropods.yml`, and the same names in the commands of FABRIC-SETUP) with your own prefix, for example your Astro or GitHub user, and use your own organization (`ast account switch <org>`). **Never deploy with a name somebody else already uses**: in a shared Astro organization, deploying with an existing blueprint name replaces or breaks that person's agent.
 4. Run the `Fraud agent - arms` collection: requests 1 to 7, then 8 (Compare) and its Visualize tab.
 
-Arms and their status (the legend in FABRIC-SETUP.md marks what was verified in production): A direct, F through Fabric, F-eco economy route, D adaptive router, B all 67 tools, C Tool Search. DEMO.md has the 50-minute talk track.
+Arms and their status (the legend in FABRIC-SETUP.md marks what was verified in production): A direct, F through Fabric, F-eco economy route, D adaptive router, B all 67 tools, C Tool Search.
 
 ## Using the Postman collections
 
@@ -89,5 +89,4 @@ The collections in `postman/collections/` are Postman v3 (YAML) files. `.postman
 ## Related
 
 - **Lightyear** (token savings for long coding-agent sessions): https://github.com/davidespihernandez/lightyear-bench. A separate repo with a benchmark you can run on your own tenant.
-- [DEMO.md](../DEMO.md): the talk track.
 - [FABRIC-SETUP.md](FABRIC-SETUP.md): the Fabric configuration, step by step.

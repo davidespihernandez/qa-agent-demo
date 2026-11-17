@@ -25,7 +25,6 @@ Show how an agent is created and deployed (Astro), exposed through a gateway (Fa
 - [ ] Harness: run the three arms and print the comparison table
 - [ ] Astro: spec, local run, deploy
 - [ ] Fabric: connections, route, gateway key, plugins
-- [ ] DEMO.md talk track with real numbers
 
 ## Ideas to integrate into the demo (parked, current plan stays as is)
 
