@@ -1,7 +1,7 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "Demo APIs (Orders, Users, Payments)",
+    "title": "orders-http-mcp",
     "version": "1.0.0",
     "description": "Orders, Users and Payments APIs of the postman-api-catalog-demo, merged into one spec so a single Fabric service and MCP route cover all three."
   },

@@ -34,19 +34,19 @@ export const ARMS: Record<Arm, { title: string; llm: string; tools: string; env?
   B: {
     title: 'Fabric MCP route, all tools',
     llm: 'Fabric LLM route (the agent only holds a gateway key)',
-    tools: 'One Fabric MCP route that joins our Orders/Users/Payments MCP server (21 tools) and the GitHub MCP server (46 tools): the model gets all 67 definitions on every step',
+    tools: 'One Fabric MCP route that joins our Orders/Users/Payments tools (19, from the OpenAPI import) and the GitHub MCP server (46 tools): the model gets all 65 definitions on every step',
     env: 'MCP_URL',
   },
   'B-ro': {
     title: 'Through Fabric, read-only tools',
     llm: 'Fabric LLM route',
-    tools: 'Fabric MCP route: bridge exposes only the 8 GET operations (least privilege)',
+    tools: 'Fabric MCP route: only the 6 GET operations are exposed as tools (least privilege)',
     env: 'MCP_URL_READONLY',
   },
   C: {
     title: 'Fabric + Tool Search',
     llm: 'Fabric LLM route',
-    tools: 'The same 67-tool catalog behind the Tool Search plugin: the model sees 3 tools and searches for the rest',
+    tools: 'The same 65-tool catalog behind the Tool Search plugin: the model sees 3 tools and searches for the rest',
     env: 'MCP_URL_SEARCH',
   },
   D: {

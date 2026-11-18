@@ -54,12 +54,12 @@ bun harness/run.ts --arm A --runs 3     # from the repo root
 
 ## Level 3: through Fabric and on Astro
 
-1. Do the rest of [FABRIC-SETUP.md](FABRIC-SETUP.md): the HTTP service and route for the demo APIs (section 3), the MCP routes you want (4 to 6, and 8d/8e if you use our own MCP server), and the adaptive router (8, 8c).
+1. Do the rest of [FABRIC-SETUP.md](FABRIC-SETUP.md): the HTTP service and route for the demo APIs (section 3), the MCP routes you want (8g imports the OpenAPI files in `fabric/openapi/`, with no MCP server of your own; 8d and 8e build the big 65-tool scenario with GitHub), and the adaptive router (8, 8c).
 2. Point the repo at your tenant: section 9 (`.env`: `LLM_BASE_URL`, `MCP_URL`, `FABRIC_GATEWAY_KEY`, the header names...). Check each arm: `bun harness/run.ts --arm F --runs 3`, then `F-eco`, `D`, `B`, `C`.
-3. Deploy to Astro: section 10. Before you deploy, **replace `your-name`** in the blueprint names (`name:` in `agent/astropods.yml`, `mcp-server/astropods.yml` and `decision-service/astropods.yml`, and the same names in the commands of FABRIC-SETUP) with your own prefix, for example your Astro or GitHub user, and use your own organization (`ast account switch <org>`). **Never deploy with a name somebody else already uses**: in a shared Astro organization, deploying with an existing blueprint name replaces or breaks that person's agent.
+3. Deploy to Astro: section 10. Before you deploy, **replace `your-name`** in the blueprint names (`name:` in `agent/astropods.yml` and `decision-service/astropods.yml`, and the same names in the commands of FABRIC-SETUP) with your own prefix, for example your Astro or GitHub user, and use your own organization (`ast account switch <org>`). **Never deploy with a name somebody else already uses**: in a shared Astro organization, deploying with an existing blueprint name replaces or breaks that person's agent.
 4. Run the `Fraud agent - arms` collection: requests 1 to 7, then 8 (Compare) and its Visualize tab.
 
-Arms and their status (the legend in FABRIC-SETUP.md marks what was verified in production): A direct, F through Fabric, F-eco economy route, D adaptive router, B all 67 tools, C Tool Search.
+Arms and their status (the legend in FABRIC-SETUP.md marks what was verified in production): A direct, F through Fabric, F-eco economy route, D adaptive router, B all 65 tools, C Tool Search.
 
 ## Using the Postman collections
 

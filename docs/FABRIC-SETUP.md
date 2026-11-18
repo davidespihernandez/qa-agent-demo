@@ -20,7 +20,7 @@ Legend: **bold** = a value you type or select. `code` = exact text.
 | Fabric basics (needed by everything) | 0, 1, 2 |
 | `Fabric features` collection | 7b (and 8, 8c for the adaptive router) |
 | Agent through Fabric (arms F, F-eco) | 3, then 9 |
-| MCP arms (B, B-ro, C) | 4 to 6, or 8d and 8e (our own MCP server), then 9 |
+| MCP arms (B, B-ro, C) | 8g (import the OpenAPI spec), then 8d and 8e for the big 65-tool scenario, then 9 |
 | Agent deployed on Astro | 10 |
 | Optional extras | 7, 8, 8f (Lightyear, not part of the demo) |
 
@@ -130,7 +130,7 @@ No credential is needed: the Orders API is public.
 
 ## 4. MCP route A: all tools (arm B) ❌ blocked
 
-> **Blocked (2026-10-16):** the `mcp-http-bridge` plugin is not available in the production tenant yet. Bhargav (Fabric) is looking into it. Steps 4-6 depend on it.
+> **Blocked on 2026-10-16, available since 2026-11 (see 8g).** The `mcp-http-bridge` plugin was not in the production tenant when this section was written, so the demo uses its own MCP server (8e). The plugin now ships as "Import OpenAPI spec" + "Expose as an MCP server" on the HTTP connection form, and sections 4-6 are replaced by the shorter flow in 8g. Keep 4-6 only as background.
 
 ### 4a. Route
 Where: **Routes → Create route**.
@@ -322,25 +322,46 @@ Observed 2026-10-29: `tools/list` on `/mcp/github` returns 46 tools, on `/mcp/gi
 
 **Why not Postman's MCP server.** Same setup (provider Postman, Bearer token, Shared; not OAuth or Per-user, which leave only a connect tool): `tools/list` on the Fabric route returned just `connect_postman_tenant_...` (also `Session not found` and `catalog_unavailable`) about one call in five, while 8 out of 8 direct calls to `mcp.postman.com` returned all 233 tools. On the same tenant, with the same plugin and embedder, GitHub was stable (15 out of 15 on both routes). Reported to the Fabric team.
 
-### 8e. Your own MCP server for the demo APIs (instead of `mcp-http-bridge`) ✅
+### 8e. The big catalog: our APIs plus GitHub in one route (arms B and C, 65 tools) ✅
 
-Fabric can front any MCP server (MCP servers > Connections > Create > Provider **Custom server**), so the Orders, Users and Payments APIs get an MCP front of our own. Code: `mcp-server/` (Bun, stateless JSON-RPC over HTTP; tools are generated from `specs/bridge-tools.json` and `specs/demo-apis.json`; each tool call is the matching HTTP call to `API_BASE_URL`).
+Needs 8d (the `github` connection) and 8g (the `orders-http-mcp` route). A route cannot mix an HTTP connection with MCP connections ("The connections you picked speak different protocols"), so the HTTP-to-MCP route of 8g is registered **as an MCP connection of its own**: Fabric consumes the MCP route it serves. (Before 2026-11-18 this was our own MCP server on Astro; it was removed.)
 
-1. **Deploy on Astro:** `cd mcp-server`, `ast blueprint push -y -V private`, `ast deploy your-name-orders-mcp --env main --var MCP_API_KEY=@` (see section 10). Set the agent **Public** in the dashboard and redeploy (pass the key again with `--vars-file`: `--var MCP_API_KEY=@` fails because it is not an account secret). The key goes in `.env` as `ORDERS_MCP_KEY`. Check `GET /health` (`tools: 21`, `readOnlyTools: 8`). Astro passes an unset optional input as an empty string, so the server uses `||`, not `??`, for `API_BASE_URL`.
-2. **Fabric connection:** Provider Custom server, name `orders-mcp`, target `<public url>/mcp`, upstream auth **API key**, header `x-api-key`, **Shared**, value = `ORDERS_MCP_KEY`. Tick "Create gateway route" with Gateway key: the route gets the default path `/mcp/orders-mcp` (not `/mcp/orders`): **arm B**, 21 tools, 6 KB.
-3. **Read-only (arm B-ro):** a second connection to `<public url>/mcp/readonly` (8 GET tools).
-4. **Tool Search (arm C):** a route with the connection(s) and a `tool-search` plugin scoped to that route, embedder as in 8d. Built first as `/mcp/orders-all-search` with `orders-mcp` and `postman` (254 tools); replace the Postman connection with `github` (21 + 46 = 67 tools, prefixed names). A route with two connections prefixes the tool names (`ord__listOrders`) and the route form accepts several connections. Searches such as "get a user by id" rank `ord__getUser` first (0.98).
-5. **Harness:** `MCP_URL=<fabric>/mcp/orders-all bun harness/run.ts --arm B --runs 3`, `MCP_URL_SEARCH=<fabric>/mcp/orders-all-search ... --arm C`, and for D2 `MCP_URL= MCP_URL_READONLY= MCP_URL_SEARCH= LLM_BASE_URL=<fabric>/anthropic-adaptive-rules ... --arm D2` (an empty `MCP_URL` is needed because `.env` points to the old bridge route).
+1. **Connection:** MCP servers > Connections > Create > Provider **Custom server**. Name `orders-http`, target `<HOST>/mcp/orders-http-mcp`, access Open, upstream auth **API key**, header `fg-api-key`, credential **Shared** (not Per-user), value = your gateway key. Leave "Create gateway route" unticked.
+2. **Route B (all tools):** Routes > Create route, protocol MCP, name `orders-http-all`, connections `orders-http` and `github`, path `/mcp/orders-http-all`, "Require gateway auth". Result: 65 tools (19 of ours with the prefix `oh__`, 46 of GitHub with `git__`), 59 KB of definitions.
+3. **Route C (Tool Search):** the same with name `orders-http-all-search` and path `/mcp/orders-http-all-search`, plus a plugin instance `tool-search` scoped to **that route**, embedder as in 8d. `tools/list` returns the 3 meta-tools. "get a user by id" ranks `oh__getUser` first (0.98); "list open issues in a repository" ranks `git__issue_read` and `git__list_issues`.
+4. **Harness:** `MCP_URL=<HOST>/mcp/orders-http-all bun harness/run.ts --arm B --runs 3`, `MCP_URL_SEARCH=<HOST>/mcp/orders-http-all-search ... --arm C`. Also put them in `.env` as `MCP_URL` and `MCP_URL_SEARCH`.
 
-**Results (2026-10-29, 13 orders, oracle-checked, all runs pass).** Median input tokens: A 20.4k, F 20.5k, B 21.1k, C 26.8k (6 steps, 30 s against 4 steps, 20 s), D 23.6k, D2 23.7k (13 s). On a 21-tool catalog Tool Search costs more (the tool list is only 6 KB and the three meta-tools are 5 KB, each search is an extra model call); it pays off on big catalogs (GitHub MCP: 46 tools, 50 KB, against 3 tools, 5 KB; Postman MCP: 233 tools, 405 KB). Dollar costs from `harness/compare.ts` use Sonnet 4.5 prices, so only A, B, C and F are valid; F-eco, D and D2 ran on other models.
-
-**Known issue:** the Fabric route to the Postman MCP server flapped (see 8d), so combined routes with Postman were unreliable; the demo no more uses Postman MCP.
-
----
+**Results (2026-11-18, 13 orders, oracle-checked).** B 6 of 9 runs pass; the first 3 runs, made right after creating the routes, ended after one `listOrders` call and flagged nothing (2 steps), and the next 6 passed (4 to 6 steps, 84k to 129k input tokens summed over the steps). C passed 3 of 3 (7 to 9 steps, 30k to 37k input tokens). The first failures look like a cold start, but we did not find the cause: run B once or twice before the demo and check the Traces. Tool Search pays off with this catalog: each step of B sends 59 KB of tool definitions, C sends the 3 meta-tools.
 
 ### 8f. Lightyear (tested 2026-11-16, NOT part of the demo)
 
 Lightyear is a mode of the `llm-router` plugin (preview; built for long coding-agent sessions; Anthropic, OpenAI and Gemini routes only). We tried it as an arm of this agent (arm F with the route `/anthropic-lightyear`: route with connection `anthropic` and base path `/anthropic-lightyear`, plugin `llm-router` mode `lightyear` scoped to that route, client credentials off) and removed the arm. 5 alternated runs each, same model and 6 orders: F passed 5/5 at a median $0.069 and 18 s (4 steps); L passed 4/5 at a median $0.173 and 57 s (5 to 15 steps, worst run $0.448), and neither used the prompt cache. A short loop with our own tools is not what Lightyear is for. The route and plugin can stay in the tenant for the Claude Code test.
+
+### 8g. No server to host: import the OpenAPI spec as an MCP server ✅ (tested 2026-11-18)
+
+Fabric now turns an HTTP connection into an MCP server by itself (plugin `mcp-http-bridge`, created for you). It replaces the need for our own MCP server (8e) when the catalog is only the demo APIs.
+
+The OpenAPI files are in `fabric/openapi/`. In the console: **Services > Create HTTP connection > Import OpenAPI spec**, choose the file, keep **Expose as an MCP server** ticked, **Preview**, then **Create connection and continue**.
+
+| Arm | File | Route prefix and import ID (under "Add route prefix, import ID...") | MCP path | Tools |
+|---|---|---|---|---|
+| B | `orders-http-mcp.json` | none | `/mcp/orders-http-mcp` | 19 |
+| B-ro | `orders-http-readonly.json` | `/readonly`, `orders-http-readonly` | `/mcp/orders-http-readonly` | 6 |
+| C | `orders-http-search.json` | `/search`, `orders-http-search` | `/mcp/orders-http-search` | 19 behind 3 meta-tools |
+
+Notes from the run:
+
+- **The prefix is required for the second and third import.** The import also creates plain HTTP routes with the paths of the spec (`/orders`, `/users`...). A second import without a prefix fails with `route pattern "/orders" overlaps live route owned by import ...`.
+- **Pick a new `info.title`.** Fabric names the connection after it. The same title as an existing connection shows `Update` instead of `Create` and modifies that connection (for us, the `/api` one). The files here already have their own titles.
+- **`getHealth` and `getOpenApi` come unticked** in the import preview, which leaves 19 tools (6 for read-only). If you edit the route later, check that they are still unticked: the edit form listed 21 of 21 selected.
+- **Tool Search (arm C):** Plugins > New instance `orders-http-tool-search`, plugin `tool-search`, scope **route** `orders-http-search-mcp`, embedder as in 8d.
+- **Warning `request body constraints not enforced after flattening: minProperties`** on the three PATCH tools: the spec says a PATCH body needs at least one field and the tool cannot enforce it. The API rejects an empty PATCH (400).
+- **Response size limit:** `listUsers` answered `upstream response too large` while `/users` held 113,000 synthetic users (15 MB). With the cleaned data it works. The synthetic traffic script now deletes the user it creates.
+- **Harness (2026-11-18, 3 runs each, all pass the oracle):** B 18.5k input tokens, 4 steps; B-ro 9.9k, 4 steps; C 30.2k, 8 steps. Run with `MCP_URL=<fabric>/mcp/orders-http-mcp bun harness/run.ts --arm B --runs 3`, `MCP_URL_READONLY=<fabric>/mcp/orders-http-readonly ... --arm B-ro`, `MCP_URL_SEARCH=<fabric>/mcp/orders-http-search ... --arm C`.
+
+**Mixing it with other MCP servers.** A route cannot mix an HTTP connection with MCP connections (the console says "The connections you picked speak different protocols. Split them into separate routes."). To put our tools and GitHub's in one route, register the route of this section as an MCP connection: see 8e.
+
+---
 
 ## 9. Point the repo at the new tenant
 
@@ -360,8 +381,8 @@ FABRIC_LLM_KEY_HEADER=fg-api-key       # LLM route
 
 Then, in this order:
 ```bash
-bun --env-file=.env scripts/mcp-probe.ts "$MCP_URL"              # 21 tools
-bun --env-file=.env scripts/mcp-probe.ts "$MCP_URL_READONLY"     # 8 tools
+bun --env-file=.env scripts/mcp-probe.ts "$MCP_URL"              # 65 tools
+bun --env-file=.env scripts/mcp-probe.ts "$MCP_URL_READONLY"     # 6 tools
 bun harness/run.ts --arm A  --runs 1                             # direct baseline
 bun harness/run.ts --arm B  --runs 1                             # through Fabric
 bun harness/run.ts --arm B-ro --runs 1
@@ -387,7 +408,7 @@ Not Fabric, but it decides whether the Fabric arms can run from the deployed age
 Without the Admin role, `ast secrets import` (account vault) is refused. Use **per-environment secrets** instead, which also work on Astro Corp:
 
 ```bash
-cd agent                                   # or mcp-server, decision-service
+cd agent                                   # or decision-service
 ast blueprint push -y -V private           # must be private: environments do not exist for public blueprints
 ast env create main --blueprint your-name-fraud-agent
 ast secrets create ANTHROPIC_API_KEY --env main --blueprint your-name-fraud-agent --value "$ANTHROPIC_API_KEY" --overwrite   # same for FABRIC_GATEWAY_KEY, DEMO_API_KEY, FRAUD_WEBHOOK_URL
@@ -397,10 +418,10 @@ ast agent redeploy --name your-name-fraud-agent --latest --wait   # after every 
 ast agent logs --name your-name-fraud-agent ; ast agent network --name your-name-fraud-agent
 ```
 
-Secret names per blueprint: `your-name-orders-mcp` needs `MCP_API_KEY` (from `ORDERS_MCP_KEY`), `your-name-decision-service` needs `DEBUG_KEY` (from `DECISION_DEBUG_KEY`), `your-name-fraud-agent` needs `ANTHROPIC_API_KEY` too (the model input). Delete any temp vars file afterwards.
+Secret names per blueprint: `your-name-decision-service` needs `DEBUG_KEY` (from `DECISION_DEBUG_KEY`), `your-name-fraud-agent` needs `ANTHROPIC_API_KEY` too (the model input). Delete any temp vars file afterwards.
 
 Gotchas seen: with `ast` 0.32 `ast env create` and `ast blueprint builds list` need the blueprint name; setting the **blueprint** to Public (dashboard) breaks redeploys ("account variable not found") and exposes it to the org, set it back with `ast blueprint set <name> -V private` (the agent's own access setting is the one to change); `--grant` exists on `deploy` only; a suspended account (billing) shows every agent as `suspended`; a push needs a clean git tree for the blueprint files (or `--allow-dirty`).
-After moving org, update the Fabric targets: connection `decision-rules`, connection `orders-mcp` (`<public url>/mcp`) and service `fraud-agent-astro`. Routes, plugins, Postman collections and `.env` do not change.
+After moving org, update the Fabric targets: connection `decision-rules` and service `fraud-agent-astro`. Routes, plugins, Postman collections and `.env` do not change.
 
 - **Public HTTP API:** the agent's HTTP surface is the *frontend* interface. In the Astro dashboard open the agent →
   **Configure → Access → Custom app → Public**, then **redeploy**. Only then does the host change to

@@ -26,9 +26,9 @@ This repository has everything to reproduce the demo: the agent code, the Postma
 | `postman/environments/`, `postman/globals/` | The Postman environment and globals the collections use. They point at the author's tenant; see the guide to override them. |
 | `postman/build-*.ts` | Scripts that generate the collections. The committed collections come from Postman's Git sync, so regenerating them overwrites that state. |
 | [`agent/`](agent/README.md) | The fraud agent (Mastra, TypeScript, Bun), its HTTP API (`POST /review`, `GET /runs/{id}`, `GET /arms`), the plain-English fraud policy, the oracle that checks the result, and the Astro blueprint (`astropods.yml`). |
-| [`mcp-server/`](mcp-server) | A small MCP server (Bun, runs on Astro) that turns the Orders, Users and Payments APIs into 21 MCP tools (`/mcp`) or the 8 read-only ones (`/mcp/readonly`). It stands in for the `mcp-http-bridge` plugin. |
 | [`decision-service/`](decision-service/README.md) | A small deterministic HTTP service (Bun, runs on Astro) that answers the adaptive router's questions with plain rules instead of Jev. |
 | `harness/` | Runs one or more arms from the command line and scores them: `bun harness/run.ts --arm F-eco --runs 3`, and `compare.ts` to compare results. |
+| [`fabric/openapi/`](fabric/openapi) | The OpenAPI files to import in Fabric (Services > Create HTTP connection > Import OpenAPI spec) to expose the demo APIs as an MCP server with no server of your own. See `docs/FABRIC-SETUP.md`, section 8g. |
 | `scripts/` | `seed.ts` (create the labeled demo orders), `mcp-probe.ts` (check an MCP route), `dump-bridge-tools.ts` (dump the tools the bridge exposes). |
 | [`docs/`](docs) | `GETTING-STARTED.md`, `FABRIC-SETUP.md`, `webhook-contract.md` (the fraud alert the agent sends), `PLAN.md` (the original plan, kept for history). |
 | `results/` | Where the harness writes its runs (not committed). |
@@ -59,11 +59,11 @@ The policy is plain English (`agent/agent/fraud-policy.md`): flag orders over $1
 | F-eco | Fabric `/anthropic-select` | service only allows Haiku 4.5 and Sonnet 4.5; agent asks for Haiku |
 | D | Fabric `/anthropic-adaptive` | adaptive router (decision service Jev); picks Haiku for trivial prompts, Opus 5.5 for our review task |
 | B-ro | Fabric MCP route with only the 8 read-only tools | same as B, fewer tools |
-| B | Fabric MCP route `/mcp/orders-all` (our own MCP server, 21 tools, plus GitHub MCP, 46 tools) | all 67 tool definitions go to the model on every step |
-| C | Same 67 tools behind Tool Search (`/mcp/orders-all-search`) | the model sees 3 tools and searches for the rest |
+| B | Fabric MCP route `/mcp/orders-http-all` (our 19 tools from the OpenAPI import, plus GitHub MCP, 46 tools) | all 65 tool definitions go to the model on every step |
+| C | Same 65 tools behind Tool Search (`/mcp/orders-http-all-search`) | the model sees 3 tools and searches for the rest |
 | D2 | Fabric `/anthropic-adaptive-rules` | adaptive router with our own decision service |
 
-The Postman collection `Fraud agent - arms` compares them in two scenarios, each sorted from the most to the least expensive arm: (1) same 21 tools, A vs F vs F-eco vs F with model "cheap"; (2) a 67-tool catalog, B vs C. Send requests 1 to 6, then 7 (Compare) and open Visualize.
+The Postman collection `Fraud agent - arms` compares them in two scenarios, each sorted from the most to the least expensive arm: (1) same 21 tools, A vs F vs F-eco vs F with model "cheap"; (2) a 65-tool catalog, B vs C. Send requests 1 to 6, then 7 (Compare) and open Visualize.
 
 Every run is checked by an oracle: the agent passes only if the set of flagged orders equals the set computed from the data.
 
