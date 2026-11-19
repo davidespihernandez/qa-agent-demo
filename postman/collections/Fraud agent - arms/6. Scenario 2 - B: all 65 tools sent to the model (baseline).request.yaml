@@ -1,5 +1,5 @@
 $kind: http-request
-description: "Scenario 2 (big catalog). The tools come from one Fabric MCP route that joins our Orders/Users/Payments server (21 tools) and the GitHub MCP server (46 tools). The model gets all 67 tool definitions on every step. Needs MCP_URL on the agent (route /mcp/orders-all)."
+description: "Scenario 2 (big catalog). The tools come from one Fabric MCP route that joins our Orders/Users/Payments tools (19 tools, from the OpenAPI import) and the GitHub MCP server (46 tools). The model gets all 65 tool definitions on every step. Needs MCP_URL on the agent (route /mcp/orders-all)."
 url: "{{baseUrl}}/review"
 method: POST
 headers:

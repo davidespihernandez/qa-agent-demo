@@ -15,8 +15,8 @@ scripts:
       const scenarios = [
         { title: 'Scenario 1: same agent, same task, 21 tools. What changes is the path and the model', base: 'A',
           arms: [['A', 'Direct to Anthropic (baseline)'], ['F', 'Through Fabric, same model'], ['F-eco', 'Through Fabric, cheaper model (economy route)'], ['F-cheap', 'Through Fabric, model "cheap" chosen per request'], ['D', 'Through Fabric, adaptive router: our decision service picks the model per step']] },
-        { title: 'Scenario 2: same agent, same task, a big tool catalog (Orders + GitHub, 67 tools). What changes is how the tools reach the model', base: 'B',
-          arms: [['B', 'All 67 tools sent to the model on every step (baseline)'], ['C', 'Tool Search: the model sees 3 tools and searches for the rest']] },
+        { title: 'Scenario 2: same agent, same task, a big tool catalog (Orders + GitHub, 65 tools). What changes is how the tools reach the model', base: 'B',
+          arms: [['B', 'All 65 tools sent to the model on every step (baseline)'], ['C', 'Tool Search: the model sees 3 tools and searches for the rest']] },
       ];
       const money = c => c == null ? 'n/a' : '$' + c.toFixed(3);
       const kt = n => n == null ? '' : (n / 1000).toFixed(1) + 'k';

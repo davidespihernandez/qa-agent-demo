@@ -184,6 +184,9 @@ export async function runReview(arm: string, cfg: QaConfig, opts: ReviewOptions 
       steps: res.steps?.length ?? null,
       toolCalls: res.toolCalls?.length ?? null,
       summary: String(res.text ?? '').split('\n').filter((l) => l.startsWith('SUMMARY')).pop() ?? null,
+      // Kept so a run that stops early can be diagnosed: what the model said last, and why it stopped.
+      finalText: String(res.text ?? '').slice(0, 1500),
+      finishReason: res.finishReason ?? null,
       findings: reports,
       // What the agent actually did: every tool it called, in order, with the arguments it chose.
       calls: (res.steps ?? []).flatMap((st: any) => (st.toolCalls ?? []).map((c: any) => ({ tool: c.payload?.toolName ?? c.toolName, args: c.payload?.args ?? c.args }))),
